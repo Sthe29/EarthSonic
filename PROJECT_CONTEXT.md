@@ -207,6 +207,42 @@ $$\text{Chroma} = \sqrt{(a - 128)^2 + (b - 128)^2}$$
 > [!IMPORTANT]
 > Any temperature displayed by EarthSonic is currently an **experimental visualization-based estimate** derived from colorbar gradient inversion. While calibrated via CIE L\*a\*b\*, lossy 8-bit JPEG/MP4 compression causes minor chroma quantization shifts. It must not be presented as certified radiometer measurements until verified against raw numerical MUR arrays.
 
+### 5.6 MUR Numerical Data Validation via NOAA CoastWatch ERDDAP
+- **Validation Status:** **PASS** (Empirically verified live on 2026-11-14).
+- **Public Endpoint Verified:** `https://coastwatch.pfeg.noaa.gov/erddap/griddap/jplMURSST41` (REST/JSON format).
+- **Authentication:** Zero authentication, token exchange, or API credentials required (unauthenticated public scientific data service).
+- **Dimensions & Ordering:**
+  - `time` (Double, `seconds since 1970-01-01T00:00:00Z`, daily reference at `09:00:00Z`).
+  - `latitude` (Float, `degrees_north`, $-89.99^\circ \dots +89.99^\circ$, $0.01^\circ$ resolution).
+  - `longitude` (Float, `degrees_east`, $-179.99^\circ \dots +180.00^\circ$, $0.01^\circ$ resolution).
+  - Dimension constraint order: `[time][latitude][longitude]`.
+- **Variables Verified:**
+  1. `analysed_sst` (Double, units: `degree_C`): Foundation Sea Surface Temperature ($SST_{\text{fnd}}$) blended via Multi-Resolution Variational Analysis (MRVA). Native units on ERDDAP are degrees Celsius. Fill value: `-7.768000000000001` (parsed as `null`/`None` in JSON). Valid range: $-7.767^\circ\text{C} \dots 57.767^\circ\text{C}$.
+  2. `analysis_error` (Double, units: `degree_C`): Estimated $1\sigma$ uncertainty standard deviation of the analysed SST. Fill value: `-327.68` (`null` in JSON). Valid range: $0.0^\circ\text{C} \dots 327.67^\circ\text{C}$.
+  3. `mask` (Byte, unitless flag): Categorical sea/land/ice classification bitmask. Flag masks and meanings:
+     - `1`: `open_sea`
+     - `2`: `land`
+     - `4`: `open_lake`
+     - `8`: `open_sea_with_ice_in_the_grid`
+     - `16`: `open_lake_with_ice_in_the_grid`
+     Fill value: `-128`.
+  4. `sea_ice_fraction` (Double, units: `1`, range $0.0 \dots 1.0$): Dimensionless sea-ice area fraction from EUMETSAT OSI-SAF. Fill value: `-1.28` (`null` in JSON).
+- **Live Empirical Test Results (Durban Coastline, South Africa):**
+  - **Verified Reference Timestamp:** `2026-11-13T09:00:00Z`
+  - **Sample 1: Durban Harbor / City (Lat -29.85°, Lon +31.02°):**  
+    `mask = 2` (`land`), `analysed_sst = null`, `analysis_error = null`. The dataset accurately recognized continental port land and withheld ocean temperature.
+  - **Sample 2: Durban Offshore Indian Ocean (3×3 Grid, Lat -29.86°..-29.84°, Lon +31.06°..+31.08°):**  
+    `mask = 1` (`open_sea`), `analysed_sst = 22.833°C .. 22.879°C`, `analysis_error = 0.4°C`, `sea_ice_fraction = null`. Payload: 9 rows, $\approx 1.2\text{ KB}$, sub-second response.
+  - **Sample 3: Coastline Transect (Lat -29.85° across Lon +31.00° to +31.06°):**
+    - $+31.00^\circ\text{E} \dots +31.03^\circ\text{E}$: `mask = 2` (Land), `SST = None (Masked)`
+    - $+31.04^\circ\text{E}$: `mask = 1` (Open Ocean), `SST = 22.868 °C (±0.4 °C)`
+    - $+31.05^\circ\text{E}$: `mask = 1` (Open Ocean), `SST = 22.863 °C (±0.4 °C)`
+    - $+31.06^\circ\text{E}$: `mask = 1` (Open Ocean), `SST = 22.858 °C (±0.4 °C)`
+- **Scientific Interpretation:**
+  - `analysed_sst` is an analyzed Level-4 (L4) product, not a single raw instrument reading. It combines infrared (MODIS, AVHRR), microwave (AMSR2), and in-situ buoys via variational interpolation, removing cloud gaps while providing a continuous foundation temperature.
+  - `analysis_error` provides ground-truth observation uncertainty ($\pm 0.4^\circ\text{C}$ in clear coastal waters) that EarthSonic can sonify as an auditory confidence dimension.
+- **Integration Feasibility:** Confirmed feasible, high-speed ($\approx 1.2\text{ KB}$ JSON payload, sub-second latency), and fully compatible with EarthSonic's existing coordinate mapping.
+
 ---
 
 ## 6. Sonification
@@ -305,8 +341,8 @@ Implemented in [static/app.js](file:///C:/Users/User/Videos/EarthSonic-main/stat
 
 ## 9. Known Limitations and Outstanding Work
 
-1. **No Direct Numerical Connection Yet:**  
-   Currently, temperatures are derived from colorbar matching against `sst_mur_print.jpg`. They must be validated against the true 32-bit floating-point MUR NetCDF arrays.
+1. **Numerical Data Access Validated, Integration Pending:**  
+   The NOAA CoastWatch ERDDAP endpoint (`jplMURSST41`) has been empirically validated (HTTP 200, 3×3 grid parsed cleanly with native Celsius and explicit $1\sigma$ error). However, the live Flask backend integration has not yet been implemented (per the read-only milestone boundary).
 2. **JPEG Compression Chroma Noise:**  
    In lossy JPEG images, edge ringing can cause a handful of rogue pixels near coastlines to exhibit chroma deviations.
 3. **Single Active Scientific Module:**  
@@ -319,12 +355,9 @@ Implemented in [static/app.js](file:///C:/Users/User/Videos/EarthSonic-main/stat
 ## 10. Next Development Milestone
 
 ### Recommended Next Milestone: **Milestone 7 — NOAA ERDDAP Live Numerical Data Integration**
-- **Objective:** Connect `vision_engine.py` to the public, unauthenticated NOAA CoastWatch ERDDAP mirror for JPL MUR SST (`jplMURSST41`).
-- **Mechanism:** When a user selects a bounding box, the backend translates the pixel box into geographic coordinates `(lat_min, lat_max, lon_min, lon_max)` and requests a small NetCDF/CSV regional slice from ERDDAP:
-  ```text
-  https://coastwatch.pfeg.noaa.gov/erddap/griddap/jplMURSST41.nc?analysed_sst[(recent)][(lat_min):1:(lat_max)][(lon_min):1:(lon_max)]
-  ```
-- **Outcome:** The UI will display the **Visualization Colormap Estimate** and the **Authentic MUR Sensor Measurement** side-by-side, providing full scientific validation.
+- **Objective:** Implement a lightweight server-side helper in `vision_engine.py` connecting EarthSonic to `https://coastwatch.pfeg.noaa.gov/erddap/griddap/jplMURSST41.json`.
+- **Mechanism:** When a user selects a bounding box or point, the backend queries ERDDAP for the exact geographic coordinates and date, computes authentic numerical mean SST and observation error, and returns both the **Visualization Colormap Estimate** and the **Authentic MUR Numerical Measurement** side-by-side.
+- **Safety / Robustness:** Include a 5-second timeout and fallback mechanism to ensure offline robustness during demonstrations.
 
 ---
 
@@ -349,3 +382,8 @@ Implemented in [static/app.js](file:///C:/Users/User/Videos/EarthSonic-main/stat
 - **Purpose:** Interface refinement removing all emojis from landing page and module cards; replaced with monochrome SVG vector icons.
 - **Files Affected:** `templates/landing.html`, `static/style.css`.
 - **Verification:** Regex scan across codebase confirmed zero emojis remain; live server test confirmed SVG icons render cleanly with HTTP 200.
+
+### Commit `docs-mur-val` — 2026-11-14
+- **Purpose:** Document empirical validation of the NASA/JPL MUR numerical dataset via NOAA CoastWatch ERDDAP (`jplMURSST41`).
+- **Files Affected:** `PROJECT_CONTEXT.md` (documentation-only change; zero application code modified).
+- **Verification:** Live HTTP queries to `jplMURSST41.json` confirmed metadata, land mask filtering (`mask=2`), open ocean temperatures (`22.86°C`), and observation error bounds ($\pm 0.4^\circ\text{C}$).
