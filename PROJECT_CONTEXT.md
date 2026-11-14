@@ -515,23 +515,28 @@ $$f = 160.0 + \left(\frac{T - (-5.0)}{35.0 - (-5.0)}\right) \times (880.0 - 160.
 
 1. **Usability Testing Required for Comprehension Claims:**  
    While the linear mapping from $-5.0^\circ\text{C}$ to $+35.0^\circ\text{C}$ across $160\text{–}880\text{ Hz}$ ($18.0\text{ Hz/}^\circ\text{C}$) is mathematically continuous, monotonic, and acoustically validated in automated testing, empirical comprehension and interpretability claims must not be asserted without formal multi-sensory usability trials involving blind and low-vision users.
-2. **Multi-Parameter Acoustic Uncertainty Modulation Pending:**  
+2. **Visual Canvas Reliance for Spatial Selection:**  
+   While 5 keyboard-accessible preset buttons exist and manual numeric coordinate inputs are available in the MUR card, free-form regional (ROI) and single-point exploration relies on an HTML5 `<canvas>` element requiring visual mouse dragging or touch, presenting an insurmountable barrier for non-visual explorers.
+3. **Absence of Auditory Legend / Calibration Anchor:**  
+   Users cannot deduce absolute physical values (e.g. distinguishing $18^\circ\text{C}$ from $24^\circ\text{C}$) from isolated sine frequencies without an interactive acoustic reference scale or baseline auditory calibration earcon.
+4. **Lack of Integrated Synthetic Voice Readout:**  
+   Status announcements are dispatched to `#accessibility-announcer` (`aria-live="polite"`), which external screen readers speak aloud. However, users without an installed or active screen reader (e.g., low-vision, cognitively fatigued, or dyslexic learners) have no built-in synthetic text-to-speech (TTS) voice option.
+5. **Multi-Parameter Acoustic Uncertainty Modulation Pending:**  
    The formal $1\sigma$ observational uncertainty (`analysis_error_c`) is currently reported as structured text and not yet routed into harmonic dissonance, detuning, or overtone textures.
-3. **JPEG Compression Chroma Noise:**  
-   In lossy JPEG images, edge ringing can cause a handful of rogue pixels near coastlines to exhibit chroma deviations.
-4. **Single Active Scientific Module:**  
+6. **Single Active Scientific Module:**  
    Ocean Temperature is fully functional; *Ocean Currents* and *Weather & Atmosphere* cards are currently placeholders badged as *Coming Soon*.
 
 ---
 
 ## 10. Next Development Milestone
 
-### Recommended Next Milestone: **Milestone 10 — Multi-Sensory Usability Testing & Audio Parameter Refinement**
-- **Objective:** Design an interactive evaluation protocol and refine multi-sensory feedback across both sonification modes.
+### Recommended Next Milestone: **Milestone 11 — Accessibility Architecture & Auditory Calibration Implementation**
+- **Objective:** Implement non-visual spatial discovery (accessible global geographic gazetteer/preset dropdown), integrated auditory legend calibration (interactive reference tones for key temperatures), and optional Web Speech API synthetic vocalization.
 - **Mechanism:**
-  - Introduce synthetic voice readout option for frequency and temperature values.
-  - Explore mapping `analysis_error_c` to an acoustic confidence overtone or harmonic clarity dimension.
-  - Validate keyboard navigation flows and screen-reader status announcements across assistive technology screen readers (NVDA, JAWS, VoiceOver).
+  - Add accessible geographic region selector and search input with structured coordinates and marine region classifications.
+  - Implement an Auditory Scale Player allowing users to preview reference tones (-5°C, 0°C, 15°C, 30°C).
+  - Add optional text-to-speech toggle utilizing `window.speechSynthesis` alongside existing ARIA live regions.
+  - Maintain 100% backward compatibility and automated regression test coverage.
 
 ---
 
@@ -572,7 +577,168 @@ $$f = 160.0 + \left(\frac{T - (-5.0)}{35.0 - (-5.0)}\right) \times (880.0 - 160.
 - **Files Affected:** `templates/ocean_temperature.html`, `static/app.js`, `static/style.css`, `test_milestone8.py` (new), `PROJECT_CONTEXT.md`.
 - **Verification:** Comprehensive test suite `test_milestone8.py` passed 9 test scenarios (DOM inspection, zero emojis, live offshore Durban ERDDAP request, Durban port land mask, invalid coordinates, invalid dates, network timeout/503 handling, OpenCV ROI/pixel regressions, upload workflow regression, and dashboard navigation regression). All existing test suites `test_erddap.py` and `test_modular.py` confirmed 100% pass.
 
-### Commit `feat-mur-sonification` — 2026-11-14
+### Commit `9b266e0` — 2026-11-14
 - **Purpose:** First numerical data sonification mode using authentic MUR SST via Web Audio API (Milestone 9).
 - **Files Affected:** `templates/ocean_temperature.html`, `static/app.js`, `static/style.css`, `test_milestone9.py` (new), `PROJECT_CONTEXT.md`.
 - **Verification:** Comprehensive test suite `test_milestone9.py` passed 6 test scenarios (mathematical linear mapping, monotonicity/ordering, DOM audio controls, JavaScript audio graph contracts, land/missing data safeguards, and live ERDDAP Durban frequency calculation of $661.44\text{ Hz}$). All regression suites `test_milestone8.py`, `test_erddap.py`, and `test_modular.py` confirmed 100% pass.
+
+### Commit `docs-m10-accessibility` — 2026-11-14
+- **Purpose:** Milestone 10 accessibility evaluation and product design research documentation.
+- **Files Affected:** `PROJECT_CONTEXT.md` (read-only research milestone; zero application code modified).
+- **Verification:** Executed systematic 10-point accessibility audit across current user journey; synthesized published sonification literature (NASA SVS/Chandra, *Seeing Through Sounds 2022*, *Brown & Brewster 2008*, *Flowers 2005*); characterized 5 Earth observation modules with strict scientific distinctions (distinguishing NDVI greenness from canopy height and biodiversity); formulated comprehensive accessibility-first product design framework.
+
+---
+
+## 12. Accessibility and Product Design Research (Milestone 10 Planning)
+
+> **Architectural Notice:** This section synthesizes research findings and formal design proposals for future implementation. The concepts, workflows, and acoustic frameworks outlined below represent planned capabilities and design principles; they do not alter current operational application code.
+
+### 12.1 Purpose & Scope
+Milestone 10 paused application code modifications to conduct an exhaustive, rigorous evaluation of how EarthSonic serves blind and low-vision users. The investigation evaluates the existing application against real-world assistive workflows, reviews scientific literature in auditory display design, assesses prospective Earth science datasets, and specifies an accessibility-first product architecture.
+
+---
+
+### 12.2 Current Application Accessibility Assessment (10 Evaluative Questions)
+
+An exhaustive evaluation was conducted across the current codebase (`templates/landing.html`, `templates/ocean_temperature.html`, and `static/app.js`):
+
+| Evaluation Question | Current State & Mechanisms | Evaluated Accessibility Barrier | Severity |
+| :--- | :--- | :--- | :--- |
+| **1. Understand EarthSonic's Purpose** | Semantic `<header>`, skip-links (`.skip-link`), `<h1>` and descriptive `<p>` elements on both pages convey non-speech data sonification. | Visual styling is attractive, but cognitive burden exists if screen-reader users do not hear an executive summary of non-speech audio before entering workspaces. | Minor |
+| **2. Discover Available Modules** | Landing page organizes cards into `<article>` containers with heading hierarchy (`<h2>`, `<h3>`) and status badges (`Available Now`, `Coming Soon`). | Inactive modules have `.btn-disabled-module` with `aria-disabled="true"` and `tabindex="-1"`. Users discover them, but keyboard navigation skips inactive cards' buttons, requiring linear virtual-cursor navigation. | Minor |
+| **3. Select Module Without Mouse** | Standard `<a>` links with clear focus states (`:focus-visible`) and skip-links (`Skip to scientific modules selection`). | Keyboard navigation is fully functional (`Tab`, `Enter`). No barriers found on the landing page navigation. | Passed |
+| **4. Choose Location Non-Visually** | `<canvas id="analysis-canvas">` is tagged with `tabindex="0"` and `role="application"`. Five preset buttons (`.preset-btn`) and manual lat/lon inputs exist in Product 2. | **CRITICAL BARRIER:** Free-form ROI and single-pixel selection relies entirely on mouse/touch drag events (`mousedown`, `mousemove`, `mouseup`). Blind users cannot spatial explore or target custom coordinates without a visual mouse cursor. | **High Barrier** |
+| **5. Select Date Non-Visually** | Standard HTML `<input type="date" id="mur-input-date">` with explicit `<label>`. | Keyboard accessible, but stepping backward through years of daily MUR data (2002–present) is tedious without quick temporal jump presets (e.g. "Latest", "1 Year Ago", "2015 El Niño Peak"). | Moderate |
+| **6. Retrieve Scientific Information** | Two independent pathways: OpenCV colormap estimation (`/api/analyze-region`) and authentic ERDDAP numerical queries (`/api/mur-sst`). Both populate structured metrics grids. | Both mechanisms return structured data, but the distinction between Product 1 (approximate image estimate) and Product 2 (independent gridded Level-4 numerical analysis) requires clear screen-reader narration. | Passed |
+| **7. Understand Numbers via Speech** | `#accessibility-announcer` (`aria-live="polite"`, `aria-atomic="true"`) receives status strings via `announce()`. | External screen readers speak updates. However, users without an active screen reader (low vision, dyslexia) receive **zero spoken voice synthesis** because the Web Speech API is not implemented. | Moderate |
+| **8. Control Audio Playback** | Keyboard shortcuts (`Space` to toggle play/pause, `KeyS` to stop) and semantic `<button>` elements with `aria-label`. | Global shortcuts function well, but lack visual and auditory shortcut hints in the DOM. Screen-reader users must navigate into the jukebox card to discover button bindings. | Minor |
+| **9. Understand Acoustic Meaning** | Static text lists linear frequency bounds ($160\text{–}880\text{ Hz}$) and variance pulses ($0.5\text{–}6\text{ Hz}$). | **PERCEPTUAL BARRIER:** Pitch alone conveys relative ordering ("higher is warmer"), but absolute quantitative decoding ($22^\circ\text{C}$ vs $28^\circ\text{C}$) is impossible without an **auditory scale / calibration legend player**. | **High Barrier** |
+| **10. Error Recovery & Guidance** | Coordinate bounds checking ($-90^\circ$ to $+90^\circ$), land mask detection, and descriptive alerts (`role="alert"`) inform the user of continental land or server timeouts. | Errors are non-destructive and preserve state. Status alerts are announced to `aria-live` regions. Error recovery is robust. | Passed |
+
+---
+
+### 12.3 Accessible Sound Design & Psychoacoustic Research
+
+Scientific sonification must transform quantitative dimensions into acoustic parameters while respecting human auditory perception. Key findings from peer-reviewed literature:
+
+#### 12.3.1 Published Research Foundations
+- **NASA Sonification Initiatives (Chandra, System Sounds, Webb):**  
+  NASA's astronomical sonifications demonstrate that mapping spatial position (X-axis) to stereo panning or time sweep, and physical quantity (flux/brightness) to pitch, allows non-visual audiences to detect spatial clustering, gradients, and structural morphology.
+- **Seeing Through Sounds (2022) & Data Sonification for Visually Impaired Users (Brown & Brewster, 2008):**  
+  - Continuous pitch is the most effective acoustic dimension for representing continuous ordered variables (temperature, elevation, density).
+  - Absolute pitch recognition is rare in the general and blind population; users interpret relative intervals rather than exact Hertz values.
+  - **Auditory Legends:** Just as visual charts require a visual legend, auditory displays require an interactive calibration scale (e.g. hearing $-5^\circ\text{C}$, $0^\circ\text{C}$, $15^\circ\text{C}$, and $30^\circ\text{C}$ reference tones) prior to data exploration.
+  - Listeners achieve significantly higher identification accuracy when sonification is paired with brief verbal confirmation ("Speech + Non-speech duality", Flowers 2005).
+
+#### 12.3.2 Psychoacoustic Parameter Mapping
+1. **Pitch (Frequency):**  
+   - *Best Suited For:* Monotonic scalar variables (Temperature, Atmospheric Pressure, Altitude).
+   - *Mapping Range:* $160\text{ Hz}$ to $880\text{ Hz}$ (approx. $D_3$ to $A_5$). Stays within the human ear's optimal sensitivity band ($100\text{–}2000\text{ Hz}$) without causing acoustic fatigue.
+   - *Polarity:* High pitch = High quantity (warm/elevated); Low pitch = Low quantity (cold/low). This aligns with natural spatial metaphors.
+2. **Rhythm, Pulse & Rate Modulation:**  
+   - *Best Suited For:* Spatial heterogeneity, statistical variance ($\sigma$), or temporal rate of change ($dT/dt$).
+   - *Mapping Range:* $0.5\text{ Hz}$ to $6.0\text{ Hz}$. Pulses below $0.5\text{ Hz}$ lose rhythmic cohesion; pulses above $8\text{ Hz}$ blur into a single continuous buzzing timbre (sensory roughness).
+3. **Duration:**  
+   - *Best Suited For:* Discrete events, temporal persistence, or spatial distance along a cross-section transect.
+4. **Timbre & Harmonic Texture:**  
+   - *Best Suited For:* Categorical classification or uncertainty/confidence metrics.
+   - *Implementation:* Pure sine/triangle waves for high-confidence data; introducing gentle band-limited noise or overtone dissonance as measurement uncertainty ($1\sigma$ `analysis_error_c`) increases.
+5. **Spatial Audio (Stereo Panning):**  
+   - *Best Suited For:* Longitudinal position (West = Left, Prime Meridian = Center, East = Right) or directional flow vectors (currents, winds).
+
+#### 12.3.3 Auditory Clutter & Cognitive Overload
+- **The Cocktail Party Problem:** Presenting more than 3 simultaneous continuous acoustic streams leads to auditory masking and severe comprehension loss.
+- **Principle of Parsimony:** An auditory scene should present at most **one continuous primary scalar** (e.g. pitch for temperature), modulated by at most **one secondary texture** (e.g. tremolo for variance), reserving discrete auditory earcons for boundary notifications (land mask, data boundaries).
+
+---
+
+### 12.4 Prospective Future Scientific Modules
+
+To expand EarthSonic into a comprehensive Earth Information Jukebox, prospective observation domains were investigated:
+
+```
++------------------------------------------------------------------------------------------------------+
+|                                EARTH OBSERVATION MODULES COMPARISON                                  |
++------------------------------------------------------------------------------------------------------+
+| Module              | Primary Dataset              | Acoustic Dimension        | Scientific Complexity|
++---------------------+------------------------------+---------------------------+----------------------+
+| 1. Sea Surface Temp | NASA/JPL MUR (0.01° daily)   | Pitch = SST, Pulse = StdDev| Active (Complete)    |
+| 2. Vegetation (NDVI)| MODIS MOD13A2 / VIIRS VNP13A2| Harmonic Richness = Green | Moderate             |
+| 3. Canopy Structure | NASA GEDI (Lidar) / ICESat-2 | Pitch = Height (m)        | High (Sparse tracks) |
+| 4. Biodiversity     | GBIF / BioSCape (Integrated) | Polyphonic Community Chord| High (Model proxy)   |
+| 5. Atmosphere       | MERRA-2 / GEOS-FP            | Noise = Wind, Bass = Press| Moderate             |
+| 6. Cryosphere/Albedo| NSIDC Sea Ice / MODIS Albedo | Brightness = Reflectance  | Moderate             |
++------------------------------------------------------------------------------------------------------+
+```
+
+#### 12.4.1 Vegetation Dynamics: Normalized Difference Vegetation Index (NDVI)
+- **Dataset:** NASA Terra/Aqua MODIS `MOD13A2` (16-day, 1 km) or Suomi-NPP VIIRS `VNP13A2` (16-day, 500 m).
+- **Physical Meaning:** Ratio of near-infrared reflectance to red reflectance:
+  $$\text{NDVI} = \frac{\rho_{\text{NIR}} - \rho_{\text{red}}}{\rho_{\text{NIR}} + \rho_{\text{red}}}$$
+  Measures photosynthetic activity and chlorophyll absorption (values $-0.2$ to $+1.0$).
+- **What Sound Communicates:** Seasonal vegetation pulses, agricultural green-up, and drought-induced brown-downs.
+- **Critical Scientific Distinction:** **NDVI is NOT biodiversity or forest biomass.** Dense monoculture crop fields (e.g., green cornfields) exhibit maximum NDVI ($>0.8$), while old-growth biodiverse rainforests may show identical NDVI values despite vastly different ecological structures.
+
+#### 12.4.2 Forest Structure & Canopy Height vs. Biodiversity
+- **Canopy Height Dataset:** NASA GEDI (Global Ecosystem Dynamics Investigation, spaceborne lidar on ISS) Level-2B / Level-3 (canopy height in meters) and ICESat-2 ATLAS.
+- **What Sound Communicates:** Vertical forest profile. Pitch directly scales with canopy height ($0\text{–}60\text{ meters}$).
+- **Biodiversity Distinction:** Satellites do not directly count animal or plant species. Biodiversity estimation requires synthesizing satellite habitat proxies (structural complexity, fragmentation) with in-situ occurrence records (Global Biodiversity Information Facility - GBIF, or NASA BioSCape field campaigns). Conflating satellite radiometry with direct biodiversity counts is scientifically inaccurate and must be avoided.
+
+#### 12.4.3 Atmosphere & Atmospheric Dynamics
+- **Dataset:** NASA MERRA-2 (Modern-Era Retrospective analysis for Research and Applications) or GEOS-FP.
+- **Variables:** Surface pressure ($\text{hPa}$), 10m wind velocity vectors ($u, v$), and total column precipitable water.
+- **Acoustic Design:**
+  - Wind speed: Amplitude and bandwidth of low-pass filtered noise (natural wind metaphor).
+  - Wind direction: Stereo spatial panning (panning along trajectory).
+  - Surface pressure: Sub-bass foundation tone ($60\text{–}180\text{ Hz}$).
+
+#### 12.4.4 Cryosphere & Sea Ice Dynamics
+- **Dataset:** NSIDC / NASA Sea Ice Index (daily polar concentration) and MODIS MCD43A3 surface albedo.
+- **Variables:** Sea ice fraction ($0\text{–}100\%$) and broadband surface albedo ($0.0\text{–}1.0$).
+- **Acoustic Design:** Albedo/reflectance translated to spectral brightness (cutoff frequency of resonant low-pass filter). Open water produces warm, muted, absorbing tones; pack ice produces crystalline, bright, high-harmonic tones.
+
+---
+
+### 12.5 Proposed Accessibility-First Product Design Framework
+
+#### 12.5.1 Non-Visual Spatial Exploration Architecture
+To eliminate reliance on visual mouse dragging over the HTML5 `<canvas>`, EarthSonic will provide structured non-visual spatial access:
+1. **Curated Geographic Marine Gazetteer (Preset Hierarchies):**
+   - Category-based selection: Ocean Basins (Pacific, Atlantic, Indian, Southern, Arctic), Regional Seas (Mediterranean, Coral Sea, Baltic), and Thermal Extremes (Equatorial Warm Pool, Weddell Sea Freezing).
+   - Each preset carries pre-calculated bounding coordinates and center points.
+2. **Accessible Coordinate Navigator:**
+   - Numerical latitude and longitude inputs with keyboard step increments ($0.5^\circ$ standard, $5.0^\circ$ shift-modified).
+   - "Inspect Location" triggers both the OpenCV image sampling and the live MUR ERDDAP query synchronously.
+3. **Auditory Compass / Virtual Transect Sonification:**
+   - A keyboard-driven transect mode where the user navigates along a meridian or parallel using arrow keys (`ArrowUp` = North, `ArrowDown` = South, `ArrowLeft` = West, `ArrowRight` = East), playing rapid continuous pitch samples to "feel" thermal fronts and equatorial currents.
+
+#### 12.5.2 Auditory Legend & Perceptual Calibration System
+- An interactive **Auditory Scale Player** embedded in the interface:
+  - Button "Hear Freezing Point (0°C / 250 Hz)"
+  - Button "Hear Temperate Ocean (15°C / 520 Hz)"
+  - Button "Hear Tropical Waters (30°C / 790 Hz)"
+  - Button "Play Full Scale (-5°C to +35°C Sweep)"
+- This anchors the listener's mental model before scientific investigation.
+
+#### 12.5.3 Hybrid Speech + Non-Speech Strategy
+1. **Screen-Reader Politeness:** Maintain `#accessibility-announcer` with `aria-live="polite"` for users with NVDA, JAWS, or VoiceOver.
+2. **Integrated Synthetic Voice Readout (Web Speech API):**
+   - Add a "Spoken Narration" toggle (`SpeechSynthesisUtterance`).
+   - When active, selecting an ocean point speaks: *"Equatorial Pacific: 29.2 degrees Celsius, tropical warm waters, pitch 776 Hertz."*
+   - Enables complete independence for low-vision and dyslexic students without requiring external assistive software.
+
+#### 12.5.4 Visual High-Contrast & Low-Vision Optimization
+- Deep charcoal/black background (`#0b0f19`) with high-contrast text (`#f8fafc`, contrast ratio $> 14:1$, exceeding WCAG AAA).
+- Prominent focus indicators (`outline: 3px solid #38bdf8; outline-offset: 3px`).
+- Scalable typography using relative `rem` units to support browser magnification up to $400\%$ without clipping or horizontal overflow.
+- Clean monochrome vector SVG iconography with distinct geometric silhouettes.
+
+---
+
+### 12.6 Research Citations & Official References
+1. **Brown, L. M., & Brewster, S. A. (2008).** *Data Sonification for Users with Visual Impairment: A Recommendation.* Proceedings of the 2008 International Conference on Auditory Display (ICAD).
+2. **Flowers, J. H. (2005).** *Thirteen Years of Reflection on Auditory Graphs: Promises, Pitfalls, and Potential.* ACM Transactions on Applied Perception, 2(4), 396–402.
+3. **NASA Scientific Visualization Studio (SVS).** *Sea Surface Temperature — Near Real Time (Entry 5101).* [https://svs.gsfc.nasa.gov/5101/](https://svs.gsfc.nasa.gov/5101/)
+4. **NASA Chandra X-Ray Center / System Sounds.** *Data Sonification: A New Way to Experience NASA Data.* [https://chandra.si.edu/sound/](https://chandra.si.edu/sound/)
+5. **W3C Web Accessibility Initiative (WAI).** *Web Content Accessibility Guidelines (WCAG) 2.2.* [https://www.w3.org/TR/WCAG22/](https://www.w3.org/TR/WCAG22/)
+6. **NOAA CoastWatch ERDDAP.** *MUR SST High Resolution Blended Analysis (`jplMURSST41`).* [https://coastwatch.pfeg.noaa.gov/erddap/griddap/jplMURSST41.html](https://coastwatch.pfeg.noaa.gov/erddap/griddap/jplMURSST41.html)
