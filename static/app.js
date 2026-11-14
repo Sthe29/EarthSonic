@@ -73,6 +73,13 @@
     const murProviderVal = document.getElementById("mur-provider-val");
     const murProductVal = document.getElementById("mur-product-val");
 
+    // Numerical MUR Sonification Elements
+    const btnPlayMur = document.getElementById("btn-play-mur");
+    const btnStopMur = document.getElementById("btn-stop-mur");
+    const murAudioPill = document.getElementById("mur-audio-pill");
+    const murAudioFreq = document.getElementById("mur-audio-freq");
+    const murAudioDesc = document.getElementById("mur-audio-desc");
+
     // State Variables
     let selectionMode = "roi"; // "roi" or "pixel"
     let currentSelection = { x: 150, y: 210, width: 120, height: 90 }; // Default: Equatorial Pacific
@@ -82,13 +89,26 @@
     let currentStdDev = 1.84;
     let isOceanValid = true;
 
-    // Web Audio Engine State
+    // Web Audio Engine State (Image-Based Colormap Sonification)
     let audioCtx = null;
     let masterOsc = null;
     let lfoOsc = null;
     let lfoGain = null;
     let masterGain = null;
     let isAudioPlaying = false;
+
+    // Web Audio Engine State (Authentic Numerical MUR Sonification)
+    let murOsc = null;
+    let murGain = null;
+    let isMurAudioPlaying = false;
+    let currentMurSstC = 22.86; // Default to initial Durban ocean value
+    let isMurOceanValid = true;
+
+    // Numerical Mapping Range (-5°C to +35°C mapped linearly to 160 Hz to 880 Hz)
+    const MUR_MIN_TEMP = -5.0;
+    const MUR_MAX_TEMP = 35.0;
+    const MUR_MIN_FREQ = 160.0;
+    const MUR_MAX_FREQ = 880.0;
 
     // ============================================================
     // CANVAS & IMAGE RENDERING
@@ -478,6 +498,10 @@
     }
 
     async function startAudio() {
+        if (isMurAudioPlaying) {
+            stopMurAudio();
+        }
+
         initAudioContext();
         if (audioCtx.state === "suspended") {
             await audioCtx.resume();
@@ -517,6 +541,9 @@
         if (audioCtx && isAudioPlaying && masterGain) {
             masterGain.gain.setTargetAtTime(vol, audioCtx.currentTime, 0.02);
         }
+        if (audioCtx && isMurAudioPlaying && murGain) {
+            murGain.gain.setTargetAtTime(vol, audioCtx.currentTime, 0.02);
+        }
     });
 
     // Keyboard Shortcuts for Accessibility
@@ -530,6 +557,7 @@
         } else if (e.code === "KeyS") {
             e.preventDefault();
             stopAudio();
+            stopMurAudio();
         }
     });
 
@@ -562,7 +590,93 @@
         announce(`Synchronized map coordinates: ${lat.toFixed(2)} latitude, ${lon.toFixed(2)} longitude.`);
     }
 
+    // ============================================================
+    // NUMERICAL MUR DATA SONIFICATION (NOAA ERDDAP L4 SST)
+    // ============================================================
+
+    function calculateMurFrequency(temp) {
+        if (temp === null || temp === undefined || isNaN(temp)) return null;
+        const clamped = Math.max(MUR_MIN_TEMP, Math.min(MUR_MAX_TEMP, parseFloat(temp)));
+        // Linear relationship:
+        // frequency = minFreq + ((temp - minTemp) / (maxTemp - minTemp)) * (maxFreq - minFreq)
+        return MUR_MIN_FREQ + ((clamped - MUR_MIN_TEMP) / (MUR_MAX_TEMP - MUR_MIN_TEMP)) * (MUR_MAX_FREQ - MUR_MIN_FREQ);
+    }
+
+    async function startMurAudio() {
+        if (!isMurOceanValid || currentMurSstC === null) return;
+
+        // Stop image audio if playing so both do not conflict
+        if (isAudioPlaying) {
+            stopAudio();
+        }
+
+        initAudioContext();
+        if (audioCtx.state === "suspended") {
+            await audioCtx.resume();
+        }
+
+        // Clean up any lingering murOsc
+        if (murOsc) {
+            try { murOsc.stop(); murOsc.disconnect(); } catch (e) {}
+            murOsc = null;
+        }
+
+        const targetFreq = calculateMurFrequency(currentMurSstC);
+        if (targetFreq === null) return;
+
+        murOsc = audioCtx.createOscillator();
+        murOsc.type = "sine";
+        murOsc.frequency.setValueAtTime(targetFreq, audioCtx.currentTime);
+
+        murGain = audioCtx.createGain();
+        murGain.gain.setValueAtTime(0.0001, audioCtx.currentTime);
+
+        murOsc.connect(murGain);
+        murGain.connect(audioCtx.destination);
+
+        murOsc.start();
+        const vol = parseFloat(volumeControl ? volumeControl.value : 0.2) || 0.2;
+        murGain.gain.exponentialRampToValueAtTime(vol, audioCtx.currentTime + 0.05);
+
+        isMurAudioPlaying = true;
+        if (btnPlayMur) btnPlayMur.disabled = true;
+        if (btnStopMur) btnStopMur.disabled = false;
+        if (murAudioPill) {
+            murAudioPill.textContent = `Playing ${currentMurSstC.toFixed(2)}°C (${Math.round(targetFreq)} Hz)`;
+            murAudioPill.className = "status-pill playing";
+        }
+
+        announce(`Playing numerical MUR tone for ${currentMurSstC.toFixed(2)} degrees Celsius at ${Math.round(targetFreq)} Hertz.`);
+    }
+
+    function stopMurAudio() {
+        if (murOsc && murGain && audioCtx) {
+            try {
+                murGain.gain.setValueAtTime(murGain.gain.value, audioCtx.currentTime);
+                murGain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.04);
+                const oscToStop = murOsc;
+                setTimeout(() => {
+                    try {
+                        oscToStop.stop();
+                        oscToStop.disconnect();
+                    } catch (e) {}
+                }, 50);
+            } catch (e) {}
+        }
+        murOsc = null;
+        isMurAudioPlaying = false;
+        if (btnPlayMur) btnPlayMur.disabled = !isMurOceanValid;
+        if (btnStopMur) btnStopMur.disabled = true;
+        if (murAudioPill) {
+            murAudioPill.textContent = "Audio Stopped";
+            murAudioPill.className = "status-pill idle";
+        }
+        announce("Stopped numerical MUR tone.");
+    }
+
     async function requestMurNumericalData(latVal, lonVal, dateVal) {
+        if (isMurAudioPlaying) stopMurAudio();
+
         const lat = parseFloat(latVal);
         const lon = parseFloat(lonVal);
 
@@ -615,22 +729,34 @@
     }
 
     function showMurError(message) {
+        if (isMurAudioPlaying) stopMurAudio();
+        isMurOceanValid = false;
+        currentMurSstC = null;
         if (murLoading) murLoading.style.display = "none";
         if (murResults) murResults.style.display = "none";
         if (murError) {
             murError.style.display = "flex";
             if (murErrorMessage) murErrorMessage.textContent = message;
         }
+        if (btnPlayMur) btnPlayMur.disabled = true;
+        if (btnStopMur) btnStopMur.disabled = true;
+        if (murAudioPill) {
+            murAudioPill.textContent = "Unavailable";
+            murAudioPill.className = "status-pill idle";
+        }
+        if (murAudioDesc) murAudioDesc.textContent = "Sonification unavailable due to service error.";
         announce(`Notice: ${message}`);
     }
 
     function updateMurResults(data) {
+        if (isMurAudioPlaying) stopMurAudio();
         if (murError) murError.style.display = "none";
         if (murResults) murResults.style.display = "flex";
 
-        const isOcean = data.is_ocean && data.analysed_sst_c !== null;
+        currentMurSstC = data.analysed_sst_c;
+        isMurOceanValid = data.is_ocean && data.analysed_sst_c !== null;
 
-        if (isOcean) {
+        if (isMurOceanValid) {
             if (murTempValue) murTempValue.textContent = `${data.analysed_sst_c.toFixed(2)}°C`;
             if (murMaskPill) {
                 murMaskPill.textContent = "Open Sea (Ocean)";
@@ -644,6 +770,19 @@
                     ? `± ${data.analysis_error_c.toFixed(2)}°C (1σ)` 
                     : "N/A";
             }
+
+            // Update numerical audio controls
+            const freq = calculateMurFrequency(currentMurSstC);
+            if (murAudioFreq) murAudioFreq.textContent = `${Math.round(freq)} Hz`;
+            if (murAudioDesc) {
+                murAudioDesc.innerHTML = `Frequency: <strong id="mur-audio-freq">${Math.round(freq)} Hz</strong> (Linear scale: -5°C = 160 Hz, 35°C = 880 Hz).`;
+            }
+            if (btnPlayMur) btnPlayMur.disabled = false;
+            if (btnStopMur) btnStopMur.disabled = true;
+            if (murAudioPill) {
+                murAudioPill.textContent = "Audio Idle";
+                murAudioPill.className = "status-pill idle";
+            }
         } else {
             if (murTempValue) murTempValue.textContent = "—";
             if (murMaskPill) {
@@ -654,6 +793,18 @@
                 murStatusText.textContent = data.warning || "Selected coordinates are over continental land or sea-ice mask. Ocean temperature is masked in MUR dataset.";
             }
             if (murErrorVal) murErrorVal.textContent = "N/A (Masked)";
+
+            // Disable numerical audio controls for land/masked area
+            if (murAudioFreq) murAudioFreq.textContent = "N/A (Masked)";
+            if (murAudioDesc) {
+                murAudioDesc.textContent = `Sonification disabled: Selected coordinates are over non-ocean surface (${data.mask_classification || 'masked'}).`;
+            }
+            if (btnPlayMur) btnPlayMur.disabled = true;
+            if (btnStopMur) btnStopMur.disabled = true;
+            if (murAudioPill) {
+                murAudioPill.textContent = "Playback Disabled";
+                murAudioPill.className = "status-pill idle";
+            }
         }
 
         if (murCoordsVal && data.coordinates) {
@@ -673,8 +824,8 @@
         if (murProviderVal) murProviderVal.textContent = "NOAA CoastWatch ERDDAP";
         if (murProductVal) murProductVal.textContent = "Level-4 Foundation SST";
 
-        const announcement = isOcean 
-            ? `Retrieved MUR numerical data. Temperature is ${data.analysed_sst_c.toFixed(2)} degrees Celsius. Observation uncertainty plus minus ${data.analysis_error_c ? data.analysis_error_c.toFixed(2) : 0} degrees.`
+        const announcement = isMurOceanValid 
+            ? `Retrieved MUR numerical data. Temperature is ${data.analysed_sst_c.toFixed(2)} degrees Celsius. Observation uncertainty plus minus ${data.analysis_error_c ? data.analysis_error_c.toFixed(2) : 0} degrees. Pitch is ${Math.round(calculateMurFrequency(currentMurSstC))} Hertz.`
             : `Retrieved MUR numerical data for coordinates. Area is classified as ${data.mask_classification}. Ocean temperature is masked.`;
         announce(announcement);
     }
@@ -696,6 +847,25 @@
     if (btnSyncCanvasCoords) {
         btnSyncCanvasCoords.addEventListener("click", syncCoordinatesFromCanvas);
     }
+
+    if (btnPlayMur) {
+        btnPlayMur.addEventListener("click", startMurAudio);
+    }
+
+    if (btnStopMur) {
+        btnStopMur.addEventListener("click", stopMurAudio);
+    }
+
+    // Expose for automated verification and test harnesses
+    window.EarthSonic = {
+        calculateMurFrequency,
+        startMurAudio,
+        stopMurAudio,
+        MIN_TEMP: MUR_MIN_TEMP,
+        MAX_TEMP: MUR_MAX_TEMP,
+        MIN_FREQ: MUR_MIN_FREQ,
+        MAX_FREQ: MUR_MAX_FREQ
+    };
 
     // ============================================================
     // INITIALIZATION

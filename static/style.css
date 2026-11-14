@@ -921,6 +921,39 @@ body {
     gap: 14px;
 }
 
+/* Numerical MUR Sonification Panel */
+.mur-audio-panel {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.mur-audio-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.mur-audio-controls {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.mur-audio-description {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.mur-audio-description strong {
+    color: var(--brand-cyan);
+    font-family: var(--font-mono);
+}
+
 .mur-provenance-footer {
     border-top: 1px solid var(--border-color);
     padding-top: 10px;

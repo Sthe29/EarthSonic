@@ -126,17 +126,18 @@ C:\Users\User\Videos\EarthSonic-main\
 ├── test_modular.py                     # Automated UI & OpenCV regression test suite (6 test cases)
 ├── test_erddap.py                      # Automated ERDDAP integration test suite (7 test scenarios)
 ├── test_milestone8.py                  # Automated frontend numerical integration test suite (9 test cases)
+├── test_milestone9.py                  # Automated numerical sonification test suite (6 test scenarios)
 ├── PROJECT_CONTEXT.md                  # This permanent project technical memory document
 ├── static/
-│   ├── app.js                          # Client canvas interaction, API client, Web Audio engine (709 lines)
-│   ├── style.css                       # Modern dark scientific dashboard & landing styles (1,403 lines)
+│   ├── app.js                          # Client canvas interaction, API client, Web Audio engine (773 lines)
+│   ├── style.css                       # Modern dark scientific dashboard & landing styles (1,436 lines)
 │   └── nasa/
 │       ├── sst_mur_print.jpg           # NASA SVS 5101 Equirectangular SST map (1024×512, JPEG)
 │       ├── sst_mur_colorbar.png        # NASA master colorbar graphic (3840×2160, RGBA, 16-bit)
 │       └── colorbar_cropped.png        # Cropped legend graphic displayed in the UI (3360×750, PNG)
 ├── templates/
 │   ├── landing.html                    # Modular landing dashboard with 4 scientific exploration cards
-│   ├── ocean_temperature.html          # Dedicated Ocean Temperature workspace with dual-product panels (411 lines)
+│   ├── ocean_temperature.html          # Dedicated Ocean Temperature workspace with dual-product panels (430 lines)
 │   └── index.html                      # Backward-compatible template (includes ocean_temperature.html)
 └── uploads/                            # Server directory storing user-uploaded media files
 ```
@@ -161,6 +162,8 @@ C:\Users\User\Videos\EarthSonic-main\
   Automated test suite executing 7 comprehensive test scenarios: unit validation functions, offshore Durban point query (mocked), Durban land coordinate detection, invalid coordinates handling (HTTP 400), invalid dates rejection (HTTP 400), fill-value parsing, simulated timeouts / 503 errors (HTTP 504 / 502), and a real live network call to NOAA CoastWatch ERDDAP.
 - **[test_milestone8.py](file:///C:/Users/User/Videos/EarthSonic-main/test_milestone8.py):**  
   Automated integration and regression suite executing 9 test scenarios: template DOM inspection, live offshore Durban ERDDAP request, Durban port land mask request, invalid coordinates handling, invalid dates handling, simulated upstream timeout/503 errors, OpenCV ROI/pixel regressions, file upload regression, and dashboard navigation regression.
+- **[test_milestone9.py](file:///C:/Users/User/Videos/EarthSonic-main/test_milestone9.py):**  
+  Automated sonification test suite executing 6 test scenarios: linear frequency mapping calculations, monotonicity and ordering across thermal spectrum, DOM audio controls and accessibility, JavaScript audio graph contracts, land/missing data safeguards, and live ERDDAP frequency calculation ($661.44\text{ Hz}$ for Durban).
 - **[static/app.js](file:///C:/Users/User/Videos/EarthSonic-main/static/app.js):**  
   Client controller:
   - `initCanvas()`, `drawOverlay()`: Renders visualization onto canvas and draws ROI dashed box.
@@ -168,10 +171,12 @@ C:\Users\User\Videos\EarthSonic-main\
   - `syncCoordinatesFromCanvas()`: Translates canvas selection center/point to geographic coordinates and populates ERDDAP form inputs.
   - `requestMurNumericalData(lat, lon, date)`: Asynchronous JSON call to `/api/mur-sst` with client validation, loading state, and error handling.
   - `updateMurResults(data)`: Renders numerical SST, observation uncertainty, surface classification, and metadata into DOM.
-  - `initAudioContext()`, `updateSoundTone()`, `startAudio()`, `pauseAudio()`, `stopAudio()`: Web Audio API sound synthesis.
+  - `calculateMurFrequency(temp)`: Linear mapping converting numerical SST ($-5^\circ\text{C} \dots +35^\circ\text{C}$) to audio frequency ($160\text{ Hz} \dots 880\text{ Hz}$).
+  - `startMurAudio()`, `stopMurAudio()`: Independent Web Audio sonification engine for authentic numerical MUR temperatures with safe ramped gain.
+  - `initAudioContext()`, `updateSoundTone()`, `startAudio()`, `pauseAudio()`, `stopAudio()`: Dual-oscillator synthesizer for image-based spatial colormap estimates.
   - `announce()`: Pushes natural language status updates to `#accessibility-announcer` (`aria-live="polite"`).
 - **[static/style.css](file:///C:/Users/User/Videos/EarthSonic-main/static/style.css):**  
-  Custom CSS variables, high-contrast typography, responsive flex/grid layouts, dashed bounding box overlays, monochrome SVG icon styling, accessible focus rings, and dedicated `.mur-numerical-card` styles.
+  Custom CSS variables, high-contrast typography, responsive flex/grid layouts, dashed bounding box overlays, monochrome SVG icon styling, accessible focus rings, dedicated `.mur-numerical-card` styles, and `.mur-audio-panel` sonification layout.
 
 ---
 
@@ -374,7 +379,54 @@ Implemented in [static/app.js](file:///C:/Users/User/Videos/EarthSonic-main/stat
 3. **Land / Mask Alert:**
    - When land is selected, the audio shifts to a low, non-alarming 110 Hz tone with slow pulse, signaling that ocean temperature cannot be sampled.
 
-### 6.3 Future Sonification Research
+### 6.3 Authentic Numerical MUR Sonification (Milestone 9)
+Implemented in Milestone 9 via [static/app.js](file:///C:/Users/User/Videos/EarthSonic-main/static/app.js) (`calculateMurFrequency`, `startMurAudio`, `stopMurAudio`) and dedicated UI controls in [templates/ocean_temperature.html](file:///C:/Users/User/Videos/EarthSonic-main/templates/ocean_temperature.html):
+
+#### 1. Linear Temperature-to-Frequency Relationship
+The numerical sonification engine translates authentic gridded Sea Surface Temperature observations ($T$ in °C) directly into acoustic pitch ($f$ in Hz) using a continuous, strictly monotonic linear function:
+
+$$f = f_{\min} + \left(\frac{T - T_{\min}}{T_{\max} - T_{\min}}\right) \times (f_{\max} - f_{\min})$$
+
+Where:
+- $T_{\min} = -5.0^\circ\text{C}$
+- $T_{\max} = +35.0^\circ\text{C}$
+- $f_{\min} = 160.0\text{ Hz}$
+- $f_{\max} = 880.0\text{ Hz}$
+
+Substituting the constants gives the operational relationship:
+
+$$f = 160.0 + \left(\frac{T - (-5.0)}{35.0 - (-5.0)}\right) \times (880.0 - 160.0) = 160.0 + \left(\frac{T + 5.0}{40.0}\right) \times 720.0$$
+
+#### 2. Range Justification & Acoustic Sensitivity
+- **Thermal Physical Range ($-5.0^\circ\text{C} \dots +35.0^\circ\text{C}$):** Matches the published GHRSST Level-4 MUR dataset bounds and the NASA SVS 5101 colormap. While typical seawater freezes at $\approx -1.8^\circ\text{C}$, the $-5.0^\circ\text{C}$ lower bound accommodates polar sea-ice margins and sub-zero surface anomalies, while $+35.0^\circ\text{C}$ represents Earth's warmest tropical warm pools (e.g., Persian Gulf, Western Pacific).
+- **Acoustic Frequency Limits ($160.0\text{ Hz} \dots 880.0\text{ Hz}$):** The lower bound of $160\text{ Hz}$ (musical pitch D#3) produces a warm, audible bass tone that reproduces reliably on laptop and mobile device speakers without requiring external subwoofers. The upper bound of $880\text{ Hz}$ (musical pitch A5) provides clear, brilliant treble perception without reaching piercing or listener-fatiguing frequencies ($>2000\text{ Hz}$).
+- **Linear Pitch Sensitivity:** The total frequency span of $720.0\text{ Hz}$ across a $40.0^\circ\text{C}$ thermal span yields a consistent rate of change:
+  $$\frac{\Delta f}{\Delta T} = \frac{720.0\text{ Hz}}{40.0^\circ\text{C}} = 18.0\text{ Hz per }^\circ\text{C}$$
+  Because human frequency discrimination ($\text{JND}$) in this register is approximately $1\text{–}3\text{ Hz}$, listeners can discern fractions of a degree Celsius without cognitive overload.
+- **Boundary Clamping:** Input values outside $[-5.0^\circ\text{C}, +35.0^\circ\text{C}]$ are clamped safely prior to frequency calculation:
+  $$T_{\text{clamped}} = \max(-5.0, \min(35.0, T))$$
+
+#### 3. Representative Thermal-to-Acoustic Mappings
+| Sea Surface Temperature ($T$) | Frequency ($f$) | Musical Pitch Equivalent | Oceanographic Context |
+| :---: | :---: | :---: | :--- |
+| **$-5.00^\circ\text{C}$** | **$160.00\text{ Hz}$** | D#3 / Eb3 | Polar freezing anomaly / lower scale boundary |
+| **$0.00^\circ\text{C}$** | **$250.00\text{ Hz}$** | B3 | Seawater freezing transition zone |
+| **$2.50^\circ\text{C}$** | **$295.00\text{ Hz}$** | D4 | Subpolar polar waters |
+| **$10.00^\circ\text{C}$** | **$430.00\text{ Hz}$** | A4 | Cold temperate open ocean |
+| **$15.00^\circ\text{C}$** | **$520.00\text{ Hz}$** | C5 | Temperate transition water |
+| **$20.00^\circ\text{C}$** | **$610.00\text{ Hz}$** | D5 | Subtropical ocean basin |
+| **$22.86^\circ\text{C}$** | **$661.44\text{ Hz}$** | E5 | Durban offshore waters (Verified empirical sample) |
+| **$30.00^\circ\text{C}$** | **$790.00\text{ Hz}$** | G5 | Equatorial warm pool |
+| **$35.00^\circ\text{C}$** | **$880.00\text{ Hz}$** | A5 | Extreme tropical SST / upper scale boundary |
+
+#### 4. Web Audio Routing & Conflict Prevention
+- **Isolated Node Graph:** Operates via a dedicated sine oscillator (`murOsc`) and gain envelope (`murGain`) routing to `audioCtx.destination`.
+- **Decoupled Playback:** The image-based spatial synthesizer (with LFO tremolo) and the numerical point synthesizer (pure pitch) are strictly independent. Triggering one immediately silences the other to eliminate acoustic interference.
+- **Explicit User Activation:** Audio playback is strictly user-initiated via `#btn-play-mur`. Data loading NEVER automatically triggers sound.
+- **Safeguards for Land & Missing Data:** Non-ocean surfaces (`mask = 2` land, `mask = 4` lake, missing data) disable the audio playback controls and update status text to explain that sonification is suppressed over continental terrain.
+- **Scientific Caveat:** In accordance with scientific integrity guidelines, ERDDAP's formal $1\sigma$ `analysis_error` is reported as statistical variational uncertainty, not guaranteed sensor accuracy, and is not used to modulate timbre in this milestone.
+
+### 6.4 Future Sonification Research
 - **Polyphony / Harmonic Chords:** Representing $T_{\min}$ and $T_{\max}$ as lower and upper intervals in a harmonic triad.
 - **Multi-Track Timbre Layers:** Mapping wind vectors or ocean currents to filtered white noise or stereo panning.
 - **Temporal Rhythm:** Accelerating beat frequency during video playback when the rate of change ($dT/dt$) increases.
@@ -447,6 +499,13 @@ Implemented in [static/app.js](file:///C:/Users/User/Videos/EarthSonic-main/stat
 | - Dynamic canvas coordinate synchronization (Use Map Selection button, mouseup, presets).       |
 | - Rigorous scientific separation: no artificial ΔT calculation across disparate temporal frames. |
 | - Automated test suite test_milestone8.py passed all 9 test scenarios cleanly.                   |
+|                                                                                                 |
+| Milestone 9 (First Numerical Data Sonification):                                                |
+| - Linear temperature-to-frequency mapping: f = 160 + ((T - (-5)) / 40) * 720 Hz (18 Hz/°C).    |
+| - Dedicated MUR audio controls: #btn-play-mur, #btn-stop-mur, #mur-audio-pill, #mur-audio-desc. |
+| - Web Audio routing with independent sine oscillator and exponential gain envelopes.            |
+| - Strict conflict prevention between image and numerical audio engines.                         |
+| - Automated test suite test_milestone9.py verified 6 test scenarios cleanly.                   |
 +-------------------------------------------------------------------------------------------------+
 ```
 
@@ -454,25 +513,25 @@ Implemented in [static/app.js](file:///C:/Users/User/Videos/EarthSonic-main/stat
 
 ## 9. Known Limitations and Outstanding Work
 
-1. **Audio Sonification Confidence Modulation Pending:**  
-   The Web Audio synthesizer currently maps Mean Temperature to Master Oscillator Pitch ($160\text{–}880\text{ Hz}$) and Spatial Variance ($\sigma$) to LFO Tremolo Pulse Rate ($0.5\text{–}6.0\text{ Hz}$). The retrieved ERDDAP numerical observation uncertainty (`analysis_error_c`) has not yet been routed into the synthesizer audio graph as an acoustic confidence indicator.
-2. **JPEG Compression Chroma Noise:**  
+1. **Usability Testing Required for Comprehension Claims:**  
+   While the linear mapping from $-5.0^\circ\text{C}$ to $+35.0^\circ\text{C}$ across $160\text{–}880\text{ Hz}$ ($18.0\text{ Hz/}^\circ\text{C}$) is mathematically continuous, monotonic, and acoustically validated in automated testing, empirical comprehension and interpretability claims must not be asserted without formal multi-sensory usability trials involving blind and low-vision users.
+2. **Multi-Parameter Acoustic Uncertainty Modulation Pending:**  
+   The formal $1\sigma$ observational uncertainty (`analysis_error_c`) is currently reported as structured text and not yet routed into harmonic dissonance, detuning, or overtone textures.
+3. **JPEG Compression Chroma Noise:**  
    In lossy JPEG images, edge ringing can cause a handful of rogue pixels near coastlines to exhibit chroma deviations.
-3. **Single Active Scientific Module:**  
+4. **Single Active Scientific Module:**  
    Ocean Temperature is fully functional; *Ocean Currents* and *Weather & Atmosphere* cards are currently placeholders badged as *Coming Soon*.
-4. **No Natural Language Voice Interaction Yet:**  
-   User interaction is keyboard and mouse-driven; speech-command input has not yet been integrated.
 
 ---
 
 ## 10. Next Development Milestone
 
-### Recommended Next Milestone: **Milestone 9 — Audio Confidence & Multi-Parameter Sonification**
-- **Objective:** Route the authentic numerical observation uncertainty (`analysis_error_c`) retrieved from ERDDAP into the Web Audio API engine.
+### Recommended Next Milestone: **Milestone 10 — Multi-Sensory Usability Testing & Audio Parameter Refinement**
+- **Objective:** Design an interactive evaluation protocol and refine multi-sensory feedback across both sonification modes.
 - **Mechanism:**
-  - Map `analysis_error_c` to an acoustic confidence dimension (e.g. subtle detuning, harmonic dissonance, or a secondary high-frequency overtone when uncertainty is elevated).
-  - Provide an accessible audio comparison mode allowing blind users to toggle between sonifying the regional image colormap variance and the point numerical uncertainty.
-- **Verification:** Automated unit test suite verifying Web Audio parameters and screen-reader announcements.
+  - Introduce synthetic voice readout option for frequency and temperature values.
+  - Explore mapping `analysis_error_c` to an acoustic confidence overtone or harmonic clarity dimension.
+  - Validate keyboard navigation flows and screen-reader status announcements across assistive technology screen readers (NVDA, JAWS, VoiceOver).
 
 ---
 
@@ -508,7 +567,12 @@ Implemented in [static/app.js](file:///C:/Users/User/Videos/EarthSonic-main/stat
 - **Files Affected:** `erddap_client.py` (new), `app.py`, `vision_engine.py`, `test_erddap.py` (new), `PROJECT_CONTEXT.md`.
 - **Verification:** Comprehensive test suite `test_erddap.py` passed 7 test scenarios (validation, offshore Durban, Durban land mask, invalid coords, invalid dates, fill values, simulated timeouts/503s); live ERDDAP network query verified with HTTP 200 ($22.858^\circ\text{C} \pm 0.4^\circ\text{C}$). Existing test suite `test_modular.py` confirmed 100% backward compatibility.
 
-### Commit `feat-mur-frontend` — 2026-11-14
+### Commit `d4382b7` — 2026-11-14
 - **Purpose:** Frontend numerical MUR data integration in Ocean Temperature workspace (Milestone 8).
 - **Files Affected:** `templates/ocean_temperature.html`, `static/app.js`, `static/style.css`, `test_milestone8.py` (new), `PROJECT_CONTEXT.md`.
 - **Verification:** Comprehensive test suite `test_milestone8.py` passed 9 test scenarios (DOM inspection, zero emojis, live offshore Durban ERDDAP request, Durban port land mask, invalid coordinates, invalid dates, network timeout/503 handling, OpenCV ROI/pixel regressions, upload workflow regression, and dashboard navigation regression). All existing test suites `test_erddap.py` and `test_modular.py` confirmed 100% pass.
+
+### Commit `feat-mur-sonification` — 2026-11-14
+- **Purpose:** First numerical data sonification mode using authentic MUR SST via Web Audio API (Milestone 9).
+- **Files Affected:** `templates/ocean_temperature.html`, `static/app.js`, `static/style.css`, `test_milestone9.py` (new), `PROJECT_CONTEXT.md`.
+- **Verification:** Comprehensive test suite `test_milestone9.py` passed 6 test scenarios (mathematical linear mapping, monotonicity/ordering, DOM audio controls, JavaScript audio graph contracts, land/missing data safeguards, and live ERDDAP Durban frequency calculation of $661.44\text{ Hz}$). All regression suites `test_milestone8.py`, `test_erddap.py`, and `test_modular.py` confirmed 100% pass.

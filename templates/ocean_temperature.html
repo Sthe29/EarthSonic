@@ -326,6 +326,25 @@
                             </p>
                         </div>
 
+                        <!-- Numerical MUR Sonification Panel -->
+                        <div class="mur-audio-panel" role="region" aria-labelledby="mur-audio-heading">
+                            <div class="mur-audio-header">
+                                <span class="eyebrow" id="mur-audio-heading">NUMERICAL DATA SONIFICATION</span>
+                                <span id="mur-audio-pill" class="status-pill idle">Audio Idle</span>
+                            </div>
+                            <div class="mur-audio-controls">
+                                <button type="button" id="btn-play-mur" class="btn btn-primary btn-sm" aria-label="Play sound corresponding to numerical MUR temperature">
+                                    <span aria-hidden="true">▶</span> Play MUR Tone
+                                </button>
+                                <button type="button" id="btn-stop-mur" class="btn btn-secondary btn-sm" aria-label="Stop numerical MUR temperature sound" disabled>
+                                    <span aria-hidden="true">⏹</span> Stop Tone
+                                </button>
+                            </div>
+                            <p class="mur-audio-description" id="mur-audio-desc">
+                                Frequency: <strong id="mur-audio-freq">661 Hz</strong> (Linear scale: -5°C = 160 Hz, 35°C = 880 Hz).
+                            </p>
+                        </div>
+
                         <div class="metrics-grid">
                             <div class="metric-cell">
                                 <span class="cell-label">Analysis Uncertainty</span>
