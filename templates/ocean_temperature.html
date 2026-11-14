@@ -200,11 +200,11 @@
                     </div>
                 </div>
 
-                <!-- Scientific Analysis Results Card -->
+                <!-- Product 1: Visualization Colormap Estimate Card -->
                 <div class="metrics-card" role="region" aria-labelledby="results-heading">
                     <div class="metrics-header">
-                        <span class="eyebrow">MEASUREMENT & CALIBRATION</span>
-                        <h3 id="results-heading">Ocean Temperature Analysis</h3>
+                        <span class="eyebrow">PRODUCT 1: VISUALIZATION ESTIMATE</span>
+                        <h3 id="results-heading">Colormap Temperature Analysis</h3>
                     </div>
 
                     <div class="primary-metric-display">
@@ -260,6 +260,103 @@
                             <span>10–20°</span>
                             <span>20–26°</span>
                             <span>Tropical &gt;26°C</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Product 2: Authentic Numerical MUR Data Card -->
+                <div class="mur-numerical-card" role="region" aria-labelledby="mur-heading">
+                    <div class="metrics-header">
+                        <span class="eyebrow">PRODUCT 2: AUTHENTIC NUMERICAL DATA</span>
+                        <h3 id="mur-heading">NASA/JPL MUR Analysis (via NOAA ERDDAP)</h3>
+                    </div>
+
+                    <p class="scientific-clarification">
+                        <strong>Independent Scientific Product:</strong> Retrieved directly from the NASA/JPL Multi-scale Ultra-high Resolution (MUR) Level-4 blended analysis via NOAA CoastWatch ERDDAP. This gridded dataset is independent of the visualization colormap.
+                    </p>
+
+                    <!-- Numerical Query Form -->
+                    <form id="mur-query-form" class="mur-form" onsubmit="return false;">
+                        <div class="mur-form-grid">
+                            <div class="form-group">
+                                <label for="mur-input-lat">Latitude (°N/°S)</label>
+                                <input type="number" id="mur-input-lat" name="latitude" min="-89.99" max="89.99" step="0.01" value="-29.85" required placeholder="e.g. -29.85">
+                            </div>
+                            <div class="form-group">
+                                <label for="mur-input-lon">Longitude (°E/°W)</label>
+                                <input type="number" id="mur-input-lon" name="longitude" min="-179.99" max="180.00" step="0.01" value="31.06" required placeholder="e.g. 31.06">
+                            </div>
+                            <div class="form-group">
+                                <label for="mur-input-date">Dataset Date</label>
+                                <input type="date" id="mur-input-date" name="date" min="2002-06-01" value="2026-11-13" required>
+                            </div>
+                        </div>
+
+                        <div class="mur-form-actions">
+                            <button type="submit" id="btn-fetch-mur" class="btn btn-primary btn-sm">
+                                Request Numerical MUR Data
+                            </button>
+                            <button type="button" id="btn-sync-canvas-coords" class="btn btn-secondary btn-sm" title="Populate inputs with current map selection coordinates">
+                                Use Map Selection
+                            </button>
+                        </div>
+                    </form>
+
+                    <!-- Loading State -->
+                    <div id="mur-loading" class="mur-state-box loading" style="display: none;" role="status" aria-live="polite">
+                        <div class="spinner" aria-hidden="true"></div>
+                        <span>Querying NOAA CoastWatch ERDDAP (jplMURSST41)...</span>
+                    </div>
+
+                    <!-- Error State -->
+                    <div id="mur-error" class="mur-state-box error" style="display: none;" role="alert">
+                        <strong class="error-title">Service Notice:</strong>
+                        <span id="mur-error-message">Unable to retrieve data.</span>
+                    </div>
+
+                    <!-- Results Display -->
+                    <div id="mur-results" class="mur-results-display">
+                        <div class="primary-metric-display">
+                            <div class="metric-big">
+                                <strong id="mur-temp-value">22.86°C</strong>
+                                <span id="mur-mask-pill" class="classification-pill warm">Open Sea</span>
+                            </div>
+                            <p id="mur-status-text" class="status-explanation">
+                                Foundation SST · NASA/JPL Multi-Resolution Variational Analysis (MRVA)
+                            </p>
+                        </div>
+
+                        <div class="metrics-grid">
+                            <div class="metric-cell">
+                                <span class="cell-label">Analysis Uncertainty</span>
+                                <strong id="mur-error-val">± 0.40°C (1σ)</strong>
+                            </div>
+                            <div class="metric-cell">
+                                <span class="cell-label">Grid Coordinates</span>
+                                <strong id="mur-coords-val">-29.85°, 31.06°</strong>
+                            </div>
+                            <div class="metric-cell">
+                                <span class="cell-label">Dataset Timestamp</span>
+                                <strong id="mur-time-val">2026-11-13 09:00 UTC</strong>
+                            </div>
+                            <div class="metric-cell">
+                                <span class="cell-label">Surface Mask</span>
+                                <strong id="mur-classification-val">open_sea (Ocean)</strong>
+                            </div>
+                            <div class="metric-cell">
+                                <span class="cell-label">Data Provider</span>
+                                <strong id="mur-provider-val">NOAA CoastWatch</strong>
+                            </div>
+                            <div class="metric-cell">
+                                <span class="cell-label">Product Class</span>
+                                <strong id="mur-product-val">Level-4 Analyzed</strong>
+                            </div>
+                        </div>
+
+                        <div class="mur-provenance-footer">
+                            <p class="small muted">
+                                <strong>Provenance:</strong> NASA/JPL MUR-JPL-L4-GLOB-v4.1 via NOAA CoastWatch ERDDAP (<code>jplMURSST41</code>). Analyzed foundation SST product; not a single satellite sensor measurement.
+                            </p>
                         </div>
                     </div>
                 </div>

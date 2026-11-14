@@ -52,6 +52,27 @@
     const barSubtropical = document.getElementById("bar-subtropical");
     const barTropical = document.getElementById("bar-tropical");
 
+    // Numerical MUR Data Elements (NOAA ERDDAP)
+    const murQueryForm = document.getElementById("mur-query-form");
+    const murInputLat = document.getElementById("mur-input-lat");
+    const murInputLon = document.getElementById("mur-input-lon");
+    const murInputDate = document.getElementById("mur-input-date");
+    const btnFetchMur = document.getElementById("btn-fetch-mur");
+    const btnSyncCanvasCoords = document.getElementById("btn-sync-canvas-coords");
+    const murLoading = document.getElementById("mur-loading");
+    const murError = document.getElementById("mur-error");
+    const murErrorMessage = document.getElementById("mur-error-message");
+    const murResults = document.getElementById("mur-results");
+    const murTempValue = document.getElementById("mur-temp-value");
+    const murMaskPill = document.getElementById("mur-mask-pill");
+    const murStatusText = document.getElementById("mur-status-text");
+    const murErrorVal = document.getElementById("mur-error-val");
+    const murCoordsVal = document.getElementById("mur-coords-val");
+    const murTimeVal = document.getElementById("mur-time-val");
+    const murClassificationVal = document.getElementById("mur-classification-val");
+    const murProviderVal = document.getElementById("mur-provider-val");
+    const murProductVal = document.getElementById("mur-product-val");
+
     // State Variables
     let selectionMode = "roi"; // "roi" or "pixel"
     let currentSelection = { x: 150, y: 210, width: 120, height: 90 }; // Default: Equatorial Pacific
@@ -154,6 +175,7 @@
             currentSelection = { x: coords.x, y: coords.y, width: 1, height: 1 };
             drawOverlay();
             requestPixelAnalysis(coords.x, coords.y);
+            syncCoordinatesFromCanvas();
             isDragging = false;
         } else {
             currentSelection = { x: coords.x, y: coords.y, width: 0, height: 0 };
@@ -179,6 +201,7 @@
 
         if (selectionMode === "roi" && currentSelection && currentSelection.width > 2 && currentSelection.height > 2) {
             requestRoiAnalysis(currentSelection.x, currentSelection.y, currentSelection.width, currentSelection.height);
+            syncCoordinatesFromCanvas();
         }
     });
 
@@ -191,6 +214,7 @@
             currentSelection = { x, y, width: w, height: h };
             drawOverlay();
             requestRoiAnalysis(x, y, w, h);
+            syncCoordinatesFromCanvas();
         });
     });
 
@@ -508,6 +532,170 @@
             stopAudio();
         }
     });
+
+    // ============================================================
+    // NUMERICAL MUR DATA INTEGRATION (NOAA COASTWATCH ERDDAP)
+    // ============================================================
+
+    function syncCoordinatesFromCanvas() {
+        if (!canvas || !currentSelection) return;
+        const imgW = canvas.width || 1024;
+        const imgH = canvas.height || 512;
+        let lat, lon;
+
+        if (selectionMode === "pixel") {
+            lat = 90.0 - (currentSelection.y / imgH) * 180.0;
+            lon = (currentSelection.x / imgW) * 360.0 - 180.0;
+        } else {
+            const cx = currentSelection.x + (currentSelection.width / 2.0);
+            const cy = currentSelection.y + (currentSelection.height / 2.0);
+            lat = 90.0 - (cy / imgH) * 180.0;
+            lon = (cx / imgW) * 360.0 - 180.0;
+        }
+
+        lat = Math.max(-89.99, Math.min(89.99, lat));
+        lon = Math.max(-179.99, Math.min(180.0, lon));
+
+        if (murInputLat) murInputLat.value = lat.toFixed(2);
+        if (murInputLon) murInputLon.value = lon.toFixed(2);
+
+        announce(`Synchronized map coordinates: ${lat.toFixed(2)} latitude, ${lon.toFixed(2)} longitude.`);
+    }
+
+    async function requestMurNumericalData(latVal, lonVal, dateVal) {
+        const lat = parseFloat(latVal);
+        const lon = parseFloat(lonVal);
+
+        if (isNaN(lat) || lat < -90.0 || lat > 90.0) {
+            showMurError("Invalid latitude. Must be a numeric value between -90.0° and +90.0°.");
+            return;
+        }
+        if (isNaN(lon) || lon < -180.0 || lon > 180.0) {
+            showMurError("Invalid longitude. Must be a numeric value between -180.0° and +180.0°.");
+            return;
+        }
+        if (!dateVal || !dateVal.trim()) {
+            showMurError("Please select a valid observation date (YYYY-MM-DD).");
+            return;
+        }
+
+        // Set UI loading state
+        if (murLoading) murLoading.style.display = "flex";
+        if (murError) murError.style.display = "none";
+        if (murResults) murResults.style.display = "none";
+        if (btnFetchMur) btnFetchMur.disabled = true;
+
+        try {
+            const response = await fetch("/api/mur-sst", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    latitude: lat,
+                    longitude: lon,
+                    date: dateVal.trim()
+                })
+            });
+
+            const data = await response.json();
+
+            if (!response.ok || data.status === "error") {
+                const errMsg = data.message || `Upstream service notice (HTTP ${response.status}).`;
+                showMurError(errMsg);
+                return;
+            }
+
+            updateMurResults(data);
+        } catch (err) {
+            console.error("ERDDAP Network Error:", err);
+            showMurError("Unable to connect to EarthSonic backend or NOAA CoastWatch ERDDAP service.");
+        } finally {
+            if (murLoading) murLoading.style.display = "none";
+            if (btnFetchMur) btnFetchMur.disabled = false;
+        }
+    }
+
+    function showMurError(message) {
+        if (murLoading) murLoading.style.display = "none";
+        if (murResults) murResults.style.display = "none";
+        if (murError) {
+            murError.style.display = "flex";
+            if (murErrorMessage) murErrorMessage.textContent = message;
+        }
+        announce(`Notice: ${message}`);
+    }
+
+    function updateMurResults(data) {
+        if (murError) murError.style.display = "none";
+        if (murResults) murResults.style.display = "flex";
+
+        const isOcean = data.is_ocean && data.analysed_sst_c !== null;
+
+        if (isOcean) {
+            if (murTempValue) murTempValue.textContent = `${data.analysed_sst_c.toFixed(2)}°C`;
+            if (murMaskPill) {
+                murMaskPill.textContent = "Open Sea (Ocean)";
+                murMaskPill.className = `classification-pill ${getPillClass(data.analysed_sst_c)}`;
+            }
+            if (murStatusText) {
+                murStatusText.textContent = "Foundation SST · NASA/JPL Multi-Resolution Variational Analysis (MRVA)";
+            }
+            if (murErrorVal) {
+                murErrorVal.textContent = data.analysis_error_c !== null 
+                    ? `± ${data.analysis_error_c.toFixed(2)}°C (1σ)` 
+                    : "N/A";
+            }
+        } else {
+            if (murTempValue) murTempValue.textContent = "—";
+            if (murMaskPill) {
+                murMaskPill.textContent = (data.mask_classification || "MASKED").toUpperCase();
+                murMaskPill.className = "classification-pill masked";
+            }
+            if (murStatusText) {
+                murStatusText.textContent = data.warning || "Selected coordinates are over continental land or sea-ice mask. Ocean temperature is masked in MUR dataset.";
+            }
+            if (murErrorVal) murErrorVal.textContent = "N/A (Masked)";
+        }
+
+        if (murCoordsVal && data.coordinates) {
+            const lat = data.coordinates.grid_latitude;
+            const lon = data.coordinates.grid_longitude;
+            murCoordsVal.textContent = `${Math.abs(lat).toFixed(2)}°${lat < 0 ? 'S' : 'N'}, ${Math.abs(lon).toFixed(2)}°${lon < 0 ? 'W' : 'E'}`;
+        }
+
+        if (murTimeVal && data.time) {
+            const ts = data.time.dataset_timestamp || data.time.requested_date;
+            murTimeVal.textContent = ts.replace("T", " ").replace(":00Z", " UTC");
+        }
+
+        if (murClassificationVal) {
+            murClassificationVal.textContent = `${data.mask_classification} (${data.mask_description || 'Surface mask'})`;
+        }
+        if (murProviderVal) murProviderVal.textContent = "NOAA CoastWatch ERDDAP";
+        if (murProductVal) murProductVal.textContent = "Level-4 Foundation SST";
+
+        const announcement = isOcean 
+            ? `Retrieved MUR numerical data. Temperature is ${data.analysed_sst_c.toFixed(2)} degrees Celsius. Observation uncertainty plus minus ${data.analysis_error_c ? data.analysis_error_c.toFixed(2) : 0} degrees.`
+            : `Retrieved MUR numerical data for coordinates. Area is classified as ${data.mask_classification}. Ocean temperature is masked.`;
+        announce(announcement);
+    }
+
+    // Attach ERDDAP Form Listeners
+    if (murQueryForm) {
+        murQueryForm.addEventListener("submit", (e) => {
+            e.preventDefault();
+            requestMurNumericalData(murInputLat.value, murInputLon.value, murInputDate.value);
+        });
+    }
+
+    if (btnFetchMur) {
+        btnFetchMur.addEventListener("click", () => {
+            requestMurNumericalData(murInputLat.value, murInputLon.value, murInputDate.value);
+        });
+    }
+
+    if (btnSyncCanvasCoords) {
+        btnSyncCanvasCoords.addEventListener("click", syncCoordinatesFromCanvas);
+    }
 
     // ============================================================
     // INITIALIZATION
