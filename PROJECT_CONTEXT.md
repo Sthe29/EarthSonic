@@ -506,6 +506,20 @@ $$f = 160.0 + \left(\frac{T - (-5.0)}{35.0 - (-5.0)}\right) \times (880.0 - 160.
 | - Web Audio routing with independent sine oscillator and exponential gain envelopes.            |
 | - Strict conflict prevention between image and numerical audio engines.                         |
 | - Automated test suite test_milestone9.py verified 6 test scenarios cleanly.                   |
+|                                                                                                 |
+| Milestone 10 (Accessibility Evaluation & Research Planning):                                    |
+| - Systematic 10-point accessibility audit across current user journey.                          |
+| - Comprehensive review of published psychoacoustic and sonification research.                   |
+| - Comparative scientific analysis of 5 Earth observation modules (NDVI vs Canopy vs Biodiversity)|
+| - Accessibility-first product architecture specification in Section 12.                         |
+|                                                                                                 |
+| Milestone 11 (Interface Refinement & Product Architecture):                                      |
+| - Redesigned landing dashboard with plain-English module descriptions and honest Coming Soon states. |
+| - Structured Ocean Temperature workspace into clearly separated Product 1 and Product 2 cards.   |
+| - Added collapsible Educational Guidance Drawer explaining Foundation SST and product contrasts.  |
+| - Directly integrated Product 1 audio player within Colormap Estimate panel for clear ownership.  |
+| - Refined ocean-inspired color palette, typography hierarchy, and responsive layouts.             |
+| - Automated test suite test_ui_refinement.py verified 3 test scenarios cleanly (3/3).            |
 +-------------------------------------------------------------------------------------------------+
 ```
 
@@ -530,8 +544,8 @@ $$f = 160.0 + \left(\frac{T - (-5.0)}{35.0 - (-5.0)}\right) \times (880.0 - 160.
 
 ## 10. Next Development Milestone
 
-### Recommended Next Milestone: **Milestone 11 — Accessibility Architecture & Auditory Calibration Implementation**
-- **Objective:** Implement non-visual spatial discovery (accessible global geographic gazetteer/preset dropdown), integrated auditory legend calibration (interactive reference tones for key temperatures), and optional Web Speech API synthetic vocalization.
+### Recommended Next Milestone: **Milestone 12 — Accessible Marine Gazetteer & Auditory Calibration Scale Implementation**
+- **Objective:** Implement non-visual spatial discovery (accessible global geographic gazetteer/preset dropdown with 12 global ocean regions), integrated auditory legend calibration (interactive reference tones for key temperatures), and optional Web Speech API synthetic vocalization.
 - **Mechanism:**
   - Add accessible geographic region selector and search input with structured coordinates and marine region classifications.
   - Implement an Auditory Scale Player allowing users to preview reference tones (-5°C, 0°C, 15°C, 30°C).
@@ -582,10 +596,15 @@ $$f = 160.0 + \left(\frac{T - (-5.0)}{35.0 - (-5.0)}\right) \times (880.0 - 160.
 - **Files Affected:** `templates/ocean_temperature.html`, `static/app.js`, `static/style.css`, `test_milestone9.py` (new), `PROJECT_CONTEXT.md`.
 - **Verification:** Comprehensive test suite `test_milestone9.py` passed 6 test scenarios (mathematical linear mapping, monotonicity/ordering, DOM audio controls, JavaScript audio graph contracts, land/missing data safeguards, and live ERDDAP Durban frequency calculation of $661.44\text{ Hz}$). All regression suites `test_milestone8.py`, `test_erddap.py`, and `test_modular.py` confirmed 100% pass.
 
-### Commit `docs-m10-accessibility` — 2026-11-14
+### Commit `d5affd2` — 2026-11-14
 - **Purpose:** Milestone 10 accessibility evaluation and product design research documentation.
 - **Files Affected:** `PROJECT_CONTEXT.md` (read-only research milestone; zero application code modified).
 - **Verification:** Executed systematic 10-point accessibility audit across current user journey; synthesized published sonification literature (NASA SVS/Chandra, *Seeing Through Sounds 2022*, *Brown & Brewster 2008*, *Flowers 2005*); characterized 5 Earth observation modules with strict scientific distinctions (distinguishing NDVI greenness from canopy height and biodiversity); formulated comprehensive accessibility-first product design framework.
+
+### Commit `2a36a17` — 2026-11-15
+- **Purpose:** UI and User Experience Refinement Milestone.
+- **Files Affected:** `templates/landing.html`, `templates/ocean_temperature.html`, `static/style.css`, `test_ui_refinement.py` (new), `PROJECT_CONTEXT.md`.
+- **Verification:** Comprehensive test suite `test_ui_refinement.py` passed all 3 scenarios: plain-English module descriptions, honest Coming Soon states, clean separation of Product 1 (Colormap Estimate) and Product 2 (Authentic Numerical Data), expandable Educational Guidance Drawer, and zero emojis. All existing test suites `test_modular.py` (6/6), `test_erddap.py` (7/7), `test_milestone8.py` (9/9), and `test_milestone9.py` (6/6) confirmed 100% regression-free.
 
 ---
 

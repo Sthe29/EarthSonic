@@ -13,10 +13,10 @@
         <div class="topbar-content">
             <div class="brand-nav-group">
                 <a class="nav-back-button" href="{{ url_for('landing') }}" aria-label="Return to EarthSonic Modules Dashboard">
-                    <span aria-hidden="true">←</span> All Modules
+                    <span aria-hidden="true">&larr;</span> All Modules
                 </a>
                 <a class="brand" href="{{ url_for('landing') }}" title="Return to EarthSonic Dashboard">
-                    <span class="brand-icon" aria-hidden="true">≋</span>
+                    <span class="brand-icon" aria-hidden="true">&#x223B;</span>
                     <div class="brand-titles">
                         <strong>EarthSonic</strong>
                         <span class="brand-tagline">The Earth Information Jukebox</span>
@@ -40,7 +40,7 @@
             <span aria-current="page">Ocean Temperature (SST)</span>
         </nav>
 
-        <!-- Hero Introduction -->
+        <!-- Hero Introduction & Scientific Guide -->
         <section class="hero-card" aria-labelledby="hero-title">
             <div class="hero-text">
                 <span class="eyebrow">MODULE 1: ACCESSIBLE EARTH SCIENCE SONIFICATION</span>
@@ -48,9 +48,37 @@
                 <p class="hero-desc">
                     EarthSonic converts NASA Earth Information Center visualizations into intuitive non-speech soundscapes. Select an ocean region or point on the map below to hear its temperature signature through calibrated musical tone and thermal texture.
                 </p>
-                <p class="scientific-clarification">
+                <div class="scientific-clarification">
                     <strong>Scientific Note:</strong> This visualization measures <em>Foundation Sea Surface Temperature (SST)</em> from satellite infrared and microwave radiometers. It does <strong>not</strong> represent ocean currents, atmospheric weather, or weather forecasts.
-                </p>
+                </div>
+
+                <!-- Educational Guidance: Understanding Foundation SST & Two Products -->
+                <details class="educational-drawer">
+                    <summary class="educational-summary">
+                        <span>How to Explore: Understanding Foundation Temperature &amp; The Two Scientific Products</span>
+                        <span class="drawer-arrow" aria-hidden="true">&#x25BC;</span>
+                    </summary>
+                    <div class="educational-content">
+                        <div class="educational-grid">
+                            <div class="educational-item">
+                                <strong>What is Foundation SST?</strong>
+                                <p>Foundation Sea Surface Temperature is the temperature of ocean water below the shallow daytime heating layer (roughly 1 meter deep). By eliminating day-and-night solar warming, scientists obtain a consistent measure of heat content that drives global climate.</p>
+                            </div>
+                            <div class="educational-item">
+                                <strong>Product 1: Image Colormap Estimate</strong>
+                                <p>Estimated by analyzing pixel colors in the NASA SVS 5101 equirectangular map using OpenCV computer vision. It is ideal for rapid spatial overviews, bounding large regions (such as the Pacific Warm Pool), and viewing thermal zone distributions.</p>
+                            </div>
+                            <div class="educational-item">
+                                <strong>Product 2: Authentic Numerical Data</strong>
+                                <p>Retrieved directly from the NASA/JPL MUR Level-4 gridded analysis via NOAA CoastWatch ERDDAP. This provides authoritative blended satellite measurements at 0.01-degree resolution with formal mathematical uncertainty error bounds (&plusmn;0.40&deg;C).</p>
+                            </div>
+                            <div class="educational-item">
+                                <strong>How Sound Communicates Data</strong>
+                                <p>Musical pitch directly scales with water temperature: colder polar waters produce deep bass tones (down to 160 Hz at -5&deg;C), while warm tropical waters produce high treble tones (up to 880 Hz at 35&deg;C). Regional variation produces a gentle rhythmic pulse.</p>
+                            </div>
+                        </div>
+                    </div>
+                </details>
             </div>
         </section>
 
@@ -81,10 +109,10 @@
                     </div>
                     <div class="interaction-mode-pills" role="radiogroup" aria-label="Selection tool">
                         <button type="button" id="btn-mode-roi" class="tool-pill active" role="radio" aria-checked="true">
-                            <span aria-hidden="true">▢</span> Region of Interest (ROI)
+                            <span aria-hidden="true">&#x25A2;</span> Region of Interest (ROI)
                         </button>
                         <button type="button" id="btn-mode-pixel" class="tool-pill" role="radio" aria-checked="false">
-                            <span aria-hidden="true">⊙</span> Single Pixel
+                            <span aria-hidden="true">&#x2299;</span> Single Pixel
                         </button>
                     </div>
                 </div>
@@ -113,7 +141,7 @@
                 <div class="legend-card" role="region" aria-labelledby="legend-title">
                     <div class="legend-header">
                         <h3 id="legend-title">Calibrated Temperature Legend (NASA SVS 5101)</h3>
-                        <span class="legend-units">Units: Degrees Celsius (°C)</span>
+                        <span class="legend-units">Units: Degrees Celsius (&deg;C)</span>
                     </div>
                     
                     <div class="colorbar-wrapper">
@@ -121,18 +149,18 @@
                     </div>
 
                     <div class="legend-scale-ticks" aria-hidden="true">
-                        <span>-5°C<br><small>Polar Freezing</small></span>
-                        <span>0°C<br><small>Freezing Point</small></span>
-                        <span>10°C<br><small>Cold Temperate</small></span>
-                        <span>15°C<br><small>Transition</small></span>
-                        <span>20°C<br><small>Subtropical</small></span>
-                        <span>30°C<br><small>Tropical Warm</small></span>
-                        <span>35°C<br><small>Extreme SST</small></span>
+                        <span>-5&deg;C<br><small>Polar Freezing</small></span>
+                        <span>0&deg;C<br><small>Freezing Point</small></span>
+                        <span>10&deg;C<br><small>Cold Temperate</small></span>
+                        <span>15&deg;C<br><small>Transition</small></span>
+                        <span>20&deg;C<br><small>Subtropical</small></span>
+                        <span>30&deg;C<br><small>Tropical Warm</small></span>
+                        <span>35&deg;C<br><small>Extreme SST</small></span>
                     </div>
 
                     <div class="legend-footer">
                         <span class="legend-swatch land-swatch" aria-hidden="true"></span>
-                        <span class="legend-explanation">Neutral Gray (RGB 104,104,104) = Continents & Polar Sea Ice Mask (Excluded from ocean analysis)</span>
+                        <span class="legend-explanation">Neutral Gray (RGB 104,104,104) = Continents &amp; Polar Sea Ice Mask (Excluded from ocean analysis)</span>
                     </div>
                 </div>
 
@@ -140,14 +168,14 @@
                 <details class="upload-drawer">
                     <summary class="upload-summary">
                         <span>Upload Custom NASA Media / Video (Alternative Input)</span>
-                        <span class="drawer-arrow" aria-hidden="true">▼</span>
+                        <span class="drawer-arrow" aria-hidden="true">&#x25BC;</span>
                     </summary>
                     <div class="upload-drawer-body">
                         <form method="POST" action="{{ url_for('ocean_temperature') }}" enctype="multipart/form-data" class="upload-form">
                             <label class="upload-dropzone" for="media-input">
-                                <span class="upload-icon" aria-hidden="true">↑</span>
+                                <span class="upload-icon" aria-hidden="true">&uarr;</span>
                                 <strong>Select or drop NASA visualization</strong>
-                                <span class="muted small">PNG, JPG, WEBP, MP4, MOV · Up to 250 MB</span>
+                                <span class="muted small">PNG, JPG, WEBP, MP4, MOV &bull; Up to 250 MB</span>
                             </label>
                             <input id="media-input" name="media" type="file" accept="image/*,video/*" required>
                             <div class="upload-actions">
@@ -161,55 +189,25 @@
                 </details>
             </section>
 
-            <!-- Right Column: Sonification Jukebox & Scientific Analysis -->
-            <aside class="panel controls-panel" aria-labelledby="jukebox-heading">
-                <!-- Sound Jukebox Card -->
-                <div class="jukebox-card" role="region" aria-labelledby="jukebox-heading">
-                    <div class="jukebox-header">
-                        <div>
-                            <span class="eyebrow">NON-SPEECH SONIFICATION</span>
-                            <h2 id="jukebox-heading">Auditory Jukebox Player</h2>
-                        </div>
-                        <span id="audio-state-pill" class="status-pill idle">Audio Stopped</span>
-                    </div>
-
-                    <div class="jukebox-controls">
-                        <button id="btn-play" class="btn btn-sound-primary" type="button" aria-label="Play region temperature sonification">
-                            <span aria-hidden="true">▶</span> Play Tone
-                        </button>
-                        <button id="btn-pause" class="btn btn-sound-secondary" type="button" aria-label="Pause audio playback">
-                            <span aria-hidden="true">⏸</span> Pause
-                        </button>
-                        <button id="btn-stop" class="btn btn-sound-secondary" type="button" aria-label="Stop audio and reset pitch">
-                            <span aria-hidden="true">⏹</span> Stop
-                        </button>
-                    </div>
-
-                    <div class="volume-slider-row">
-                        <label for="volume-control">Volume (<span id="volume-readout">20%</span>)</label>
-                        <input id="volume-control" type="range" min="0" max="1" step="0.01" value="0.2" aria-label="Master audio volume">
-                    </div>
-
-                    <div class="sonification-legend">
-                        <h4>Sonification Mapping (How Data Becomes Sound):</h4>
-                        <ul>
-                            <li><strong>Musical Pitch (160 Hz – 880 Hz):</strong> Directly scales with <em>Mean Temperature</em> (-5°C = low bass, 35°C = high treble).</li>
-                            <li><strong>Harmonic Modulation / Pulse:</strong> Faster pulse rate conveys <em>Thermal Heterogeneity (StdDev)</em> across the selected region.</li>
-                            <li><strong>Land / Mask Warning:</strong> Non-ocean pixels trigger an auditory alert indicating excluded continental land.</li>
-                        </ul>
-                    </div>
-                </div>
-
+            <!-- Right Column: Scientific Products & Sonification -->
+            <aside class="panel controls-panel" aria-label="Scientific analysis and audio sonification">
                 <!-- Product 1: Visualization Colormap Estimate Card -->
-                <div class="metrics-card" role="region" aria-labelledby="results-heading">
-                    <div class="metrics-header">
-                        <span class="eyebrow">PRODUCT 1: VISUALIZATION ESTIMATE</span>
-                        <h3 id="results-heading">Colormap Temperature Analysis</h3>
+                <div class="product-card product-1-card" role="region" aria-labelledby="results-heading">
+                    <div class="product-card-header">
+                        <div>
+                            <span class="eyebrow">PRODUCT 1: VISUALIZATION ESTIMATE</span>
+                            <h3 id="results-heading">Colormap Temperature Analysis</h3>
+                        </div>
+                        <span class="product-badge estimate-badge">OpenCV Colormap Analysis</span>
                     </div>
+
+                    <p class="product-summary">
+                        Estimated from the NASA SVS 5101 colormap visualization using OpenCV computer vision. Best for rapid visual overview of large ocean regions and thermal zone distributions.
+                    </p>
 
                     <div class="primary-metric-display">
                         <div class="metric-big">
-                            <strong id="temp-primary-value">28.98°C</strong>
+                            <strong id="temp-primary-value">28.98&deg;C</strong>
                             <span id="temp-classification-pill" class="classification-pill warm">Tropical Warm Waters</span>
                         </div>
                         <p id="measurement-status-text" class="status-explanation">
@@ -228,19 +226,19 @@
                         </div>
                         <div class="metric-cell">
                             <span class="cell-label">Min / Max Range</span>
-                            <strong id="metric-minmax">0.6°C – 31.8°C</strong>
+                            <strong id="metric-minmax">0.6&deg;C &ndash; 31.8&deg;C</strong>
                         </div>
                         <div class="metric-cell">
                             <span class="cell-label">Thermal Variance</span>
-                            <strong id="metric-stddev">± 1.84°C (StdDev)</strong>
+                            <strong id="metric-stddev">&plusmn; 1.84&deg;C (StdDev)</strong>
                         </div>
                         <div class="metric-cell">
                             <span class="cell-label">Approx Coordinates</span>
-                            <strong id="metric-coords">0.7°N–31.6°S, 127.3°W–92.1°W</strong>
+                            <strong id="metric-coords">0.7&deg;N&ndash;31.6&deg;S, 127.3&deg;W&ndash;92.1&deg;W</strong>
                         </div>
                         <div class="metric-cell">
                             <span class="cell-label">Calibration Quality</span>
-                            <strong id="metric-confidence">High (ΔE &lt; 3.5)</strong>
+                            <strong id="metric-confidence">High (&Delta;E &lt; 3.5)</strong>
                         </div>
                     </div>
 
@@ -255,20 +253,60 @@
                             <div class="zone-segment tropical" id="bar-tropical" style="width: 78%;" title="Tropical (>26°C): 78%"></div>
                         </div>
                         <div class="zone-legend-text">
-                            <span>Polar &lt;0°</span>
-                            <span>0–10°</span>
-                            <span>10–20°</span>
-                            <span>20–26°</span>
-                            <span>Tropical &gt;26°C</span>
+                            <span>Polar &lt;0&deg;</span>
+                            <span>0&ndash;10&deg;</span>
+                            <span>10&ndash;20&deg;</span>
+                            <span>20&ndash;26&deg;</span>
+                            <span>Tropical &gt;26&deg;C</span>
+                        </div>
+                    </div>
+
+                    <!-- Product 1 Sonification Box -->
+                    <div class="jukebox-card" role="region" aria-labelledby="jukebox-heading">
+                        <div class="jukebox-header">
+                            <div>
+                                <span class="eyebrow">PRODUCT 1 SONIFICATION</span>
+                                <h4 id="jukebox-heading" class="jukebox-title">Colormap Audio Player</h4>
+                            </div>
+                            <span id="audio-state-pill" class="status-pill idle">Audio Stopped</span>
+                        </div>
+
+                        <div class="jukebox-controls">
+                            <button id="btn-play" class="btn btn-sound-primary" type="button" aria-label="Play region temperature sonification">
+                                <span aria-hidden="true">&#x25B6;</span> Play Tone
+                            </button>
+                            <button id="btn-pause" class="btn btn-sound-secondary" type="button" aria-label="Pause audio playback">
+                                <span aria-hidden="true">&#x23F8;</span> Pause
+                            </button>
+                            <button id="btn-stop" class="btn btn-sound-secondary" type="button" aria-label="Stop audio and reset pitch">
+                                <span aria-hidden="true">&#x23F9;</span> Stop
+                            </button>
+                        </div>
+
+                        <div class="volume-slider-row">
+                            <label for="volume-control">Volume (<span id="volume-readout">20%</span>)</label>
+                            <input id="volume-control" type="range" min="0" max="1" step="0.01" value="0.2" aria-label="Master audio volume">
+                        </div>
+
+                        <div class="sonification-legend">
+                            <h5>Colormap Sound Mapping:</h5>
+                            <ul>
+                                <li><strong>Musical Pitch (160 Hz &ndash; 880 Hz):</strong> Directly scales with <em>Mean Temperature</em> (-5&deg;C = low bass, 35&deg;C = high treble).</li>
+                                <li><strong>Harmonic Modulation / Pulse:</strong> Faster pulse rate conveys <em>Thermal Heterogeneity (StdDev)</em> across the selected region.</li>
+                                <li><strong>Land / Mask Warning:</strong> Non-ocean pixels trigger an auditory alert indicating excluded continental land.</li>
+                            </ul>
                         </div>
                     </div>
                 </div>
 
                 <!-- Product 2: Authentic Numerical MUR Data Card -->
-                <div class="mur-numerical-card" role="region" aria-labelledby="mur-heading">
-                    <div class="metrics-header">
-                        <span class="eyebrow">PRODUCT 2: AUTHENTIC NUMERICAL DATA</span>
-                        <h3 id="mur-heading">NASA/JPL MUR Analysis (via NOAA ERDDAP)</h3>
+                <div class="product-card product-2-card mur-numerical-card" role="region" aria-labelledby="mur-heading">
+                    <div class="product-card-header">
+                        <div>
+                            <span class="eyebrow">PRODUCT 2: AUTHENTIC NUMERICAL DATA</span>
+                            <h3 id="mur-heading">NASA/JPL MUR Analysis (via NOAA ERDDAP)</h3>
+                        </div>
+                        <span class="product-badge numerical-badge">Level-4 Satellite Gridded Data</span>
                     </div>
 
                     <p class="scientific-clarification">
@@ -279,11 +317,11 @@
                     <form id="mur-query-form" class="mur-form" onsubmit="return false;">
                         <div class="mur-form-grid">
                             <div class="form-group">
-                                <label for="mur-input-lat">Latitude (°N/°S)</label>
+                                <label for="mur-input-lat">Latitude (&deg;N/&deg;S)</label>
                                 <input type="number" id="mur-input-lat" name="latitude" min="-89.99" max="89.99" step="0.01" value="-29.85" required placeholder="e.g. -29.85">
                             </div>
                             <div class="form-group">
-                                <label for="mur-input-lon">Longitude (°E/°W)</label>
+                                <label for="mur-input-lon">Longitude (&deg;E/&deg;W)</label>
                                 <input type="number" id="mur-input-lon" name="longitude" min="-179.99" max="180.00" step="0.01" value="31.06" required placeholder="e.g. 31.06">
                             </div>
                             <div class="form-group">
@@ -318,11 +356,11 @@
                     <div id="mur-results" class="mur-results-display">
                         <div class="primary-metric-display">
                             <div class="metric-big">
-                                <strong id="mur-temp-value">22.86°C</strong>
+                                <strong id="mur-temp-value">22.86&deg;C</strong>
                                 <span id="mur-mask-pill" class="classification-pill warm">Open Sea</span>
                             </div>
                             <p id="mur-status-text" class="status-explanation">
-                                Foundation SST · NASA/JPL Multi-Resolution Variational Analysis (MRVA)
+                                Foundation SST &bull; NASA/JPL Multi-Resolution Variational Analysis (MRVA)
                             </p>
                         </div>
 
@@ -334,10 +372,10 @@
                             </div>
                             <div class="mur-audio-controls">
                                 <button type="button" id="btn-play-mur" class="btn btn-primary btn-sm" aria-label="Play sound corresponding to numerical MUR temperature">
-                                    <span aria-hidden="true">▶</span> Play MUR Tone
+                                    <span aria-hidden="true">&#x25B6;</span> Play MUR Tone
                                 </button>
                                 <button type="button" id="btn-stop-mur" class="btn btn-secondary btn-sm" aria-label="Stop numerical MUR temperature sound" disabled>
-                                    <span aria-hidden="true">⏹</span> Stop Tone
+                                    <span aria-hidden="true">&#x23F9;</span> Stop Tone
                                 </button>
                             </div>
                             <p class="mur-audio-description" id="mur-audio-desc">
@@ -348,11 +386,11 @@
                         <div class="metrics-grid">
                             <div class="metric-cell">
                                 <span class="cell-label">Analysis Uncertainty</span>
-                                <strong id="mur-error-val">± 0.40°C (1σ)</strong>
+                                <strong id="mur-error-val">&plusmn; 0.40&deg;C (1&sigma;)</strong>
                             </div>
                             <div class="metric-cell">
                                 <span class="cell-label">Grid Coordinates</span>
-                                <strong id="mur-coords-val">-29.85°, 31.06°</strong>
+                                <strong id="mur-coords-val">-29.85&deg;, 31.06&deg;</strong>
                             </div>
                             <div class="metric-cell">
                                 <span class="cell-label">Dataset Timestamp</span>
@@ -389,17 +427,17 @@
 
         <!-- Provenance & Scientific Attribution -->
         <section class="provenance-section panel" aria-labelledby="provenance-title">
-            <h3 id="provenance-title">Scientific Data Provenance & Dataset Information</h3>
+            <h3 id="provenance-title">Scientific Data Provenance &amp; Dataset Information</h3>
             <div class="provenance-grid">
                 <div class="provenance-item">
                     <strong>Visualization Source</strong>
-                    <p>NASA Scientific Visualization Studio (SVS) ID 5101: <em>Sea Surface Temperature — Near Real Time</em>. Global equirectangular projection (1024×512 resolution).</p>
-                    <a href="https://svs.gsfc.nasa.gov/5101/" target="_blank" rel="noopener noreferrer" class="provenance-link">Visit SVS 5101 on NASA.gov ↗</a>
+                    <p>NASA Scientific Visualization Studio (SVS) ID 5101: <em>Sea Surface Temperature &mdash; Near Real Time</em>. Global equirectangular projection (1024&times;512 resolution).</p>
+                    <a href="https://svs.gsfc.nasa.gov/5101/" target="_blank" rel="noopener noreferrer" class="provenance-link">Visit SVS 5101 on NASA.gov &nearr;</a>
                 </div>
                 <div class="provenance-item">
                     <strong>Underlying Dataset</strong>
-                    <p>JPL MUR Sea Surface Temperature Analysis (GHRSST Level 4 MUR Global Foundation SST v4.1). Multi-sensor blended analysis at 0.01° (~1 km) resolution.</p>
-                    <a href="https://podaac.jpl.nasa.gov/dataset/MUR-JPL-L4-GLOB-v4.1" target="_blank" rel="noopener noreferrer" class="provenance-link">Visit PO.DAAC MUR Dataset ↗</a>
+                    <p>JPL MUR Sea Surface Temperature Analysis (GHRSST Level 4 MUR Global Foundation SST v4.1). Multi-sensor blended analysis at 0.01&deg; (~1 km) resolution.</p>
+                    <a href="https://podaac.jpl.nasa.gov/dataset/MUR-JPL-L4-GLOB-v4.1" target="_blank" rel="noopener noreferrer" class="provenance-link">Visit PO.DAAC MUR Dataset &nearr;</a>
                 </div>
                 <div class="provenance-item">
                     <strong>Measurement Discipline</strong>
@@ -407,7 +445,7 @@
                 </div>
                 <div class="provenance-item">
                     <strong>Calibration Method</strong>
-                    <p>Calibrated using OpenCV CIE L*a*b* Euclidean distance matching against the NASA legend (-5°C to 35°C). Experimental visualization estimate; not raw sensor arrays.</p>
+                    <p>Calibrated using OpenCV CIE L*a*b* Euclidean distance matching against the NASA legend (-5&deg;C to 35&deg;C). Experimental visualization estimate; not raw sensor arrays.</p>
                 </div>
             </div>
         </section>
