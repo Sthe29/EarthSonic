@@ -1,102 +1,302 @@
-<!DOCTYPE html> <!-- Tell the browser this page uses modern HTML -->
-<html lang="en"> <!-- Start the page and declare its language -->
-<head> <!-- Start page metadata -->
-    <meta charset="UTF-8"> <!-- Support standard text characters -->
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- Make the layout responsive -->
-    <title>EarthSound | Visual Analysis</title> <!-- Set the browser tab title -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}"> <!-- Load the dashboard stylesheet -->
-</head> <!-- End page metadata -->
-<body> <!-- Start the visible page -->
-    <header class="topbar"> <!-- Create the top navigation bar -->
-        <a class="brand" href="{{ url_for('index') }}"> <!-- Link the brand back to the dashboard -->
-            <span class="brand-mark">≋</span> <!-- Show a simple sound-wave mark -->
-            <span><strong>EarthSound</strong><small>See it. Hear it.</small></span> <!-- Show the project name and tagline -->
-        </a> <!-- End the brand link -->
-        <span class="top-tag">NASA VISUAL ANALYSER</span> <!-- Identify the tool -->
-    </header> <!-- End the navigation bar -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EarthSonic | The Earth Information Jukebox — NASA SST</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <a href="#main-workspace" class="skip-link">Skip to main analysis workspace</a>
 
-    <main class="page-wrap"> <!-- Keep the dashboard content centered -->
-        <section class="intro"> <!-- Introduce the dashboard -->
-            <p class="eyebrow">VISUAL INPUT WORKSPACE</p> <!-- Show a small section label -->
-            <h1>Explore the science behind the visuals.</h1> <!-- Show the main heading -->
-            <p class="muted">Upload a NASA image or video, calibrate its legend, and inspect a selected point.</p> <!-- Explain the dashboard in plain language -->
-        </section> <!-- End the introduction -->
+    <header class="topbar" role="banner">
+        <div class="topbar-content">
+            <div class="brand">
+                <span class="brand-icon" aria-hidden="true">≋</span>
+                <div class="brand-titles">
+                    <strong>EarthSonic</strong>
+                    <span class="brand-tagline">The Earth Information Jukebox</span>
+                </div>
+            </div>
 
-        {% with messages = get_flashed_messages(with_categories=true) %} <!-- Read any upload messages -->
-            {% if messages %} <!-- Check whether messages exist -->
-                {% for category, message in messages %} <!-- Display each message -->
-                    <div class="notice {{ category }}">{{ message }}</div> <!-- Show the message with its style -->
-                {% endfor %} <!-- Finish displaying messages -->
-            {% endif %} <!-- Finish the message check -->
-        {% endwith %} <!-- Finish the message block -->
+            <div class="topbar-badges" role="region" aria-label="Dataset identification">
+                <span class="badge challenge-badge">NASA Space Apps 2026</span>
+                <span class="badge svs-badge" title="NASA Scientific Visualization Studio entry 5101">NASA SVS #5101</span>
+                <span class="badge sst-badge">Sea Surface Temperature (SST)</span>
+            </div>
+        </div>
+    </header>
 
-        <section class="upload-panel panel"> <!-- Create the upload panel -->
-            <form method="POST" enctype="multipart/form-data"> <!-- Send the selected file to Flask -->
-                <label class="upload-box" for="media-input"> <!-- Make the upload area clickable -->
-                    <span class="upload-icon">↑</span> <!-- Show an upload symbol -->
-                    <strong>Choose a NASA image or video</strong> <!-- Explain what can be uploaded -->
-                    <span class="muted small">PNG, JPG, WEBP, MP4, MOV, AVI and more · Up to 250 MB</span> <!-- List supported formats and limit -->
-                    <span class="choose-button">Browse files</span> <!-- Style the upload prompt like a button -->
-                </label> <!-- End the upload area -->
-                <input id="media-input" name="media" type="file" accept="image/*,video/*" required> <!-- Let the user choose an image or video -->
-                <button class="primary-button" type="submit">Upload and open analysis</button> <!-- Submit the upload -->
-            </form> <!-- End the upload form -->
-        </section> <!-- End the upload panel -->
+    <main id="main-workspace" class="page-wrap" role="main">
+        <!-- Hero Introduction -->
+        <section class="hero-card" aria-labelledby="hero-title">
+            <div class="hero-text">
+                <span class="eyebrow">ACCESSIBLE EARTH SCIENCE SONIFICATION</span>
+                <h1 id="hero-title">Listen to the Surface of Our Oceans</h1>
+                <p class="hero-desc">
+                    EarthSonic converts NASA Earth Information Center visualizations into intuitive non-speech soundscapes. Select an ocean region or point on the map below to hear its temperature signature through calibrated musical tone and thermal texture.
+                </p>
+                <p class="scientific-clarification">
+                    <strong>Scientific Note:</strong> This visualization measures <em>Foundation Sea Surface Temperature (SST)</em> from satellite infrared and microwave radiometers. It does <strong>not</strong> represent ocean currents, atmospheric weather, or weather forecasts.
+                </p>
+            </div>
+        </section>
 
-        {% if uploaded_url %} <!-- Show the workspace only after a successful upload -->
-        <section class="workspace"> <!-- Start the analysis workspace -->
-            <div class="section-heading"> <!-- Show the uploaded file details -->
-                <div><p class="eyebrow">CURRENT FILE</p><h2>{{ uploaded_name }}</h2></div> <!-- Display the file name -->
-                <span class="status-pill">Uploaded</span> <!-- Show upload status -->
-            </div> <!-- End the file heading -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="alerts-container" role="alert" aria-live="assertive">
+                    {% for category, message in messages %}
+                        <div class="notice {{ category }}">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
 
-            <div class="analysis-grid"> <!-- Arrange the media and controls in two columns -->
-                <section class="panel media-panel"> <!-- Create the media preview panel -->
-                    <div class="panel-heading"><h3>Visualization</h3><span class="muted small">Click the legend or map to sample pixels</span></div> <!-- Explain how to interact with the media -->
-                    {% if media_type == "video" %} <!-- Check whether the uploaded file is a video -->
-                        <video id="media-video" class="media-element" src="{{ uploaded_url }}" controls playsinline></video> <!-- Display the uploaded video -->
-                        <canvas id="analysis-canvas" class="analysis-canvas"></canvas> <!-- Draw video frames here for pixel sampling -->
-                    {% else %} <!-- Otherwise the uploaded file is an image -->
-                        <img id="media-image" class="media-element" src="{{ uploaded_url }}" alt="Uploaded NASA visualization"> <!-- Display the uploaded image -->
-                        <canvas id="analysis-canvas" class="analysis-canvas"></canvas> <!-- Draw the image here for pixel sampling -->
-                    {% endif %} <!-- Finish the media type check -->
-                    <p class="muted small" id="media-help">Select a calibration mode, then click the relevant part of the visualization.</p> <!-- Give the user a short instruction -->
-                </section> <!-- End the media panel -->
+        <!-- Workspace Grid -->
+        <div class="dashboard-grid">
+            <!-- Left Column: Visualization & Interaction -->
+            <section class="panel visual-panel" aria-labelledby="map-heading">
+                <div class="panel-header">
+                    <div>
+                        <span class="eyebrow">EARTH OBSERVATION</span>
+                        <h2 id="map-heading">Global Ocean Temperature Map</h2>
+                        {% if uploaded_name %}
+                            <div class="active-upload-pill">
+                                <span>Active Upload: <strong>{{ uploaded_name }}</strong></span>
+                                <a href="{{ url_for('index') }}" class="btn-text small">Reset to NASA SST Default</a>
+                            </div>
+                        {% endif %}
+                    </div>
+                    <div class="interaction-mode-pills" role="radiogroup" aria-label="Selection tool">
+                        <button type="button" id="btn-mode-roi" class="tool-pill active" role="radio" aria-checked="true">
+                            <span aria-hidden="true">▢</span> Region of Interest (ROI)
+                        </button>
+                        <button type="button" id="btn-mode-pixel" class="tool-pill" role="radio" aria-checked="false">
+                            <span aria-hidden="true">⊙</span> Single Pixel
+                        </button>
+                    </div>
+                </div>
 
-                <aside class="panel controls-panel"> <!-- Create the measurement controls -->
-                    <h3>Temperature calibration</h3> <!-- Name the calibration section -->
-                    <p class="muted small">Use the video's own legend. Set the temperature at two points on its colour scale.</p> <!-- Explain why calibration is required -->
-                    <label for="low-temp">Lowest legend temperature (°C)</label> <!-- Label the low temperature input -->
-                    <input id="low-temp" type="number" step="any" value="0"> <!-- Let the user enter the low legend value -->
-                    <label for="high-temp">Highest legend temperature (°C)</label> <!-- Label the high temperature input -->
-                    <input id="high-temp" type="number" step="any" value="40"> <!-- Let the user enter the high legend value -->
-                    <div class="sample-buttons"> <!-- Group the legend sampling buttons -->
-                        <button id="sample-low" class="secondary-button" type="button">1. Sample low colour</button> <!-- Ask the user to click the low end of the legend -->
-                        <button id="sample-high" class="secondary-button" type="button">2. Sample high colour</button> <!-- Ask the user to click the high end of the legend -->
-                        <button id="sample-point" class="secondary-button" type="button">3. Select map point</button> <!-- Ask the user to click the location to measure -->
-                    </div> <!-- End the sampling buttons -->
-                    <p id="sampling-status" class="helper-text">No calibration colours selected yet.</p> <!-- Show which sampling step is active -->
-                    <div class="temperature-card"> <!-- Highlight the current estimated temperature -->
-                        <span class="muted small">Estimated temperature</span> <!-- Label the displayed value -->
-                        <strong id="temperature-value">—</strong> <!-- Show the temperature after calibration -->
-                        <span id="temperature-status" class="muted small">Waiting for calibration and a selected point</span> <!-- Explain the current status -->
-                    </div> <!-- End the temperature card -->
-                    <div class="readout-row"><span>Selected pixel</span><strong id="pixel-readout">Not selected</strong></div> <!-- Display the selected pixel colour -->
-                    <div class="readout-row"><span>Video time</span><strong id="time-readout">00:00.0</strong></div> <!-- Display the current video time -->
-                    <div class="sound-controls"> <!-- Group sound controls -->
-                        <button id="sound-toggle" class="primary-button" type="button">Enable sound</button> <!-- Start or stop generated sound -->
-                        <label for="volume">Volume</label> <!-- Label the sound volume -->
-                        <input id="volume" type="range" min="0" max="1" step="0.01" value="0.15"> <!-- Let the user control sound volume -->
-                    </div> <!-- End sound controls -->
-                </aside> <!-- End controls panel -->
-            </div> <!-- End analysis grid -->
+                <!-- Visual Canvas Area -->
+                <div class="canvas-viewport" id="canvas-container" tabindex="0" role="application" aria-label="NASA ocean map. Click or drag to inspect temperatures.">
+                    <img id="media-image" class="media-element" src="{{ uploaded_url if uploaded_url else nasa_image_url }}" alt="NASA JPL MUR Sea Surface Temperature global equirectangular visualization">
+                    <canvas id="analysis-canvas" class="analysis-canvas"></canvas>
+                    <div id="selection-box" class="selection-box" style="display: none;" aria-hidden="true"></div>
+                    <div id="canvas-tooltip" class="canvas-tooltip" style="display: none;" aria-hidden="true"></div>
+                </div>
 
-            <div class="notice warning scientific-note">Important: this prototype estimates temperature only from a two-colour, linear legend calibration. Many NASA visualizations use multi-colour or non-linear legends; those need multi-point calibration before their Celsius estimates can be trusted. Values are estimates, not NASA-provided measurements.</div> <!-- Clearly state the scientific limitation -->
-        </section> <!-- End the analysis workspace -->
-        {% endif %} <!-- Finish the uploaded-file check -->
-    </main> <!-- End main page content -->
+                <!-- Preset Quick Regions for accessible instant exploration -->
+                <div class="preset-regions" role="region" aria-label="Sample geographical regions">
+                    <span class="preset-label">Explore Regions:</span>
+                    <div class="preset-button-group">
+                        <button type="button" class="preset-btn" data-roi="150,210,120,90">Equatorial Pacific Warm Pool</button>
+                        <button type="button" class="preset-btn" data-roi="380,140,110,70">North Atlantic Drift</button>
+                        <button type="button" class="preset-btn" data-roi="450,400,140,70">Southern Polar Ocean</button>
+                        <button type="button" class="preset-btn" data-roi="520,150,70,50">Mediterranean Sea</button>
+                        <button type="button" class="preset-btn" data-roi="530,200,80,60">Sahara (Land Mask Test)</button>
+                    </div>
+                </div>
 
-    <script>window.EARTHSOUND_MEDIA_TYPE = {{ media_type|tojson }};</script> <!-- Pass the uploaded media type to JavaScript -->
-    <script src="{{ url_for('static', filename='app.js') }}"></script> <!-- Load the interactive analysis logic -->
-</body> <!-- End visible page -->
-</html> <!-- End the document -->
+                <!-- Colorbar & Legend -->
+                <div class="legend-card" role="region" aria-labelledby="legend-title">
+                    <div class="legend-header">
+                        <h3 id="legend-title">Calibrated Temperature Legend (NASA SVS 5101)</h3>
+                        <span class="legend-units">Units: Degrees Celsius (°C)</span>
+                    </div>
+                    
+                    <div class="colorbar-wrapper">
+                        <img src="{{ nasa_colorbar_url }}" alt="NASA SST Colorbar Gradient from -5°C to +35°C" class="colorbar-image">
+                    </div>
+
+                    <div class="legend-scale-ticks" aria-hidden="true">
+                        <span>-5°C<br><small>Polar Freezing</small></span>
+                        <span>0°C<br><small>Freezing Point</small></span>
+                        <span>10°C<br><small>Cold Temperate</small></span>
+                        <span>15°C<br><small>Transition</small></span>
+                        <span>20°C<br><small>Subtropical</small></span>
+                        <span>30°C<br><small>Tropical Warm</small></span>
+                        <span>35°C<br><small>Extreme SST</small></span>
+                    </div>
+
+                    <div class="legend-footer">
+                        <span class="legend-swatch land-swatch" aria-hidden="true"></span>
+                        <span class="legend-explanation">Neutral Gray (RGB 104,104,104) = Continents & Polar Sea Ice Mask (Excluded from ocean analysis)</span>
+                    </div>
+                </div>
+
+                <!-- Custom Upload Collapsible -->
+                <details class="upload-drawer">
+                    <summary class="upload-summary">
+                        <span>Upload Custom NASA Media / Video (Alternative Input)</span>
+                        <span class="drawer-arrow" aria-hidden="true">▼</span>
+                    </summary>
+                    <div class="upload-drawer-body">
+                        <form method="POST" enctype="multipart/form-data" class="upload-form">
+                            <label class="upload-dropzone" for="media-input">
+                                <span class="upload-icon" aria-hidden="true">↑</span>
+                                <strong>Select or drop NASA visualization</strong>
+                                <span class="muted small">PNG, JPG, WEBP, MP4, MOV · Up to 250 MB</span>
+                            </label>
+                            <input id="media-input" name="media" type="file" accept="image/*,video/*" required>
+                            <div class="upload-actions">
+                                <button class="btn btn-primary" type="submit">Upload and analyze</button>
+                                {% if uploaded_url %}
+                                    <a href="{{ url_for('index') }}" class="btn btn-secondary">Restore NASA SST Standard</a>
+                                {% endif %}
+                            </div>
+                        </form>
+                    </div>
+                </details>
+            </section>
+
+            <!-- Right Column: Sonification Jukebox & Scientific Analysis -->
+            <aside class="panel controls-panel" aria-labelledby="jukebox-heading">
+                <!-- Sound Jukebox Card -->
+                <div class="jukebox-card" role="region" aria-labelledby="jukebox-heading">
+                    <div class="jukebox-header">
+                        <div>
+                            <span class="eyebrow">NON-SPEECH SONIFICATION</span>
+                            <h2 id="jukebox-heading">Auditory Jukebox Player</h2>
+                        </div>
+                        <span id="audio-state-pill" class="status-pill idle">Audio Stopped</span>
+                    </div>
+
+                    <div class="jukebox-controls">
+                        <button id="btn-play" class="btn btn-sound-primary" type="button" aria-label="Play region temperature sonification">
+                            <span aria-hidden="true">▶</span> Play Tone
+                        </button>
+                        <button id="btn-pause" class="btn btn-sound-secondary" type="button" aria-label="Pause audio playback">
+                            <span aria-hidden="true">⏸</span> Pause
+                        </button>
+                        <button id="btn-stop" class="btn btn-sound-secondary" type="button" aria-label="Stop audio and reset pitch">
+                            <span aria-hidden="true">⏹</span> Stop
+                        </button>
+                    </div>
+
+                    <div class="volume-slider-row">
+                        <label for="volume-control">Volume (<span id="volume-readout">20%</span>)</label>
+                        <input id="volume-control" type="range" min="0" max="1" step="0.01" value="0.2" aria-label="Master audio volume">
+                    </div>
+
+                    <div class="sonification-legend">
+                        <h4>Sonification Mapping (How Data Becomes Sound):</h4>
+                        <ul>
+                            <li><strong>Musical Pitch (160 Hz – 880 Hz):</strong> Directly scales with <em>Mean Temperature</em> (-5°C = low bass, 35°C = high treble).</li>
+                            <li><strong>Harmonic Modulation / Pulse:</strong> Faster pulse rate conveys <em>Thermal Heterogeneity (StdDev)</em> across the selected region.</li>
+                            <li><strong>Land / Mask Warning:</strong> Non-ocean pixels trigger an auditory alert indicating excluded continental land.</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Scientific Analysis Results Card -->
+                <div class="metrics-card" role="region" aria-labelledby="results-heading">
+                    <div class="metrics-header">
+                        <span class="eyebrow">MEASUREMENT & CALIBRATION</span>
+                        <h3 id="results-heading">Ocean Temperature Analysis</h3>
+                    </div>
+
+                    <div class="primary-metric-display">
+                        <div class="metric-big">
+                            <strong id="temp-primary-value">28.98°C</strong>
+                            <span id="temp-classification-pill" class="classification-pill warm">Tropical Warm Waters</span>
+                        </div>
+                        <p id="measurement-status-text" class="status-explanation">
+                            Calibrated from NASA SVS 5101 colormap via OpenCV CIE L*a*b* matching.
+                        </p>
+                    </div>
+
+                    <div class="metrics-grid">
+                        <div class="metric-cell">
+                            <span class="cell-label">Selected Area</span>
+                            <strong id="metric-region-type">Region (ROI)</strong>
+                        </div>
+                        <div class="metric-cell">
+                            <span class="cell-label">Ocean Coverage</span>
+                            <strong id="metric-ocean-pct">97.6%</strong>
+                        </div>
+                        <div class="metric-cell">
+                            <span class="cell-label">Min / Max Range</span>
+                            <strong id="metric-minmax">0.6°C – 31.8°C</strong>
+                        </div>
+                        <div class="metric-cell">
+                            <span class="cell-label">Thermal Variance</span>
+                            <strong id="metric-stddev">± 1.84°C (StdDev)</strong>
+                        </div>
+                        <div class="metric-cell">
+                            <span class="cell-label">Approx Coordinates</span>
+                            <strong id="metric-coords">0.7°N–31.6°S, 127.3°W–92.1°W</strong>
+                        </div>
+                        <div class="metric-cell">
+                            <span class="cell-label">Calibration Quality</span>
+                            <strong id="metric-confidence">High (ΔE &lt; 3.5)</strong>
+                        </div>
+                    </div>
+
+                    <!-- Thermal Zone Breakdown -->
+                    <div class="thermal-distribution" id="thermal-zones-block">
+                        <span class="cell-label">Thermal Zone Distribution in Region:</span>
+                        <div class="zone-bars" role="img" aria-label="Percentage distribution of ocean temperature zones">
+                            <div class="zone-segment polar" id="bar-polar" style="width: 0%;" title="Polar (<0°C): 0%"></div>
+                            <div class="zone-segment subpolar" id="bar-subpolar" style="width: 2%;" title="Subpolar (0-10°C): 2%"></div>
+                            <div class="zone-segment temperate" id="bar-temperate" style="width: 5%;" title="Temperate (10-20°C): 5%"></div>
+                            <div class="zone-segment subtropical" id="bar-subtropical" style="width: 15%;" title="Subtropical (20-26°C): 15%"></div>
+                            <div class="zone-segment tropical" id="bar-tropical" style="width: 78%;" title="Tropical (>26°C): 78%"></div>
+                        </div>
+                        <div class="zone-legend-text">
+                            <span>Polar &lt;0°</span>
+                            <span>0–10°</span>
+                            <span>10–20°</span>
+                            <span>20–26°</span>
+                            <span>Tropical &gt;26°C</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Screen-reader accessible live announcement -->
+                <div class="sr-live-region" aria-live="polite" aria-atomic="true" id="accessibility-announcer">
+                    EarthSonic loaded. NASA Sea Surface Temperature visualization active. Equatorial Pacific Warm Pool selected. Temperature is 28.98 degrees Celsius.
+                </div>
+            </aside>
+        </div>
+
+        <!-- Provenance & Scientific Attribution -->
+        <section class="provenance-section panel" aria-labelledby="provenance-title">
+            <h3 id="provenance-title">Scientific Data Provenance & Dataset Information</h3>
+            <div class="provenance-grid">
+                <div class="provenance-item">
+                    <strong>Visualization Source</strong>
+                    <p>NASA Scientific Visualization Studio (SVS) ID 5101: <em>Sea Surface Temperature — Near Real Time</em>. Global equirectangular projection (1024×512 resolution).</p>
+                    <a href="https://svs.gsfc.nasa.gov/5101/" target="_blank" rel="noopener noreferrer" class="provenance-link">Visit SVS 5101 on NASA.gov ↗</a>
+                </div>
+                <div class="provenance-item">
+                    <strong>Underlying Dataset</strong>
+                    <p>JPL MUR Sea Surface Temperature Analysis (GHRSST Level 4 MUR Global Foundation SST v4.1). Multi-sensor blended analysis at 0.01° (~1 km) resolution.</p>
+                    <a href="https://podaac.jpl.nasa.gov/dataset/MUR-JPL-L4-GLOB-v4.1" target="_blank" rel="noopener noreferrer" class="provenance-link">Visit PO.DAAC MUR Dataset ↗</a>
+                </div>
+                <div class="provenance-item">
+                    <strong>Measurement Discipline</strong>
+                    <p>Measures daily <strong>Foundation Sea Surface Temperature</strong> only. Does not depict ocean currents, surface winds, atmospheric precipitation, or forecasts.</p>
+                </div>
+                <div class="provenance-item">
+                    <strong>Calibration Method</strong>
+                    <p>Calibrated using OpenCV CIE L*a*b* Euclidean distance matching against the NASA legend (-5°C to 35°C). Experimental visualization estimate; not raw sensor arrays.</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="app-footer" role="contentinfo">
+        <p>EarthSonic &bull; Developed for NASA Space Apps Challenge 2026 &bull; Accessible Science Sonification</p>
+    </footer>
+
+    <script>
+        window.EARTHSONIC_CONFIG = {
+            mediaSource: {{ 'upload' if uploaded_url else 'nasa'|tojson }},
+            uploadedFilename: {{ saved_filename|tojson if saved_filename else 'null' }},
+            mediaType: {{ media_type|tojson if media_type else 'image'|tojson }},
+            defaultNasaImage: {{ nasa_image_url|tojson }}
+        };
+    </script>
+    <script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>
