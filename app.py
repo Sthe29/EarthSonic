@@ -4,6 +4,7 @@ from werkzeug.utils import secure_filename
 import uuid
 import cv2
 from vision_engine import engine, SST_MAP_PATH, COLORBAR_PATH
+from erddap_client import fetch_mur_sst
 
 BASE_DIR = Path(__file__).resolve().parent
 UPLOAD_DIR = BASE_DIR / "uploads"
@@ -141,6 +142,46 @@ def api_dataset_info():
         "podaac_url": "https://podaac.jpl.nasa.gov/dataset/MUR-JPL-L4-GLOB-v4.1",
         "status": "Visualization-based experimental estimate calibrated via OpenCV CIE L*a*b* nearest-gradient lookup table."
     })
+
+@app.route("/api/mur-sst", methods=["GET", "POST"])
+def api_mur_sst():
+    """
+    Dedicated endpoint retrieving numerical Sea Surface Temperature (SST)
+    from the NASA/JPL MUR dataset via NOAA CoastWatch ERDDAP (jplMURSST41).
+    
+    Supports:
+      - GET query parameters: ?lat=...&lon=...&date=... (also ?latitude=...&longitude=...)
+      - POST JSON payload: {"latitude": ..., "longitude": ..., "date": ...}
+      
+    Returns structured JSON with analysed_sst (°C), analysis_error (°C),
+    mask classification, and complete provenance metadata.
+    """
+    if request.method == "POST":
+        data = request.get_json(silent=True) or {}
+        lat = data.get("latitude", data.get("lat"))
+        lon = data.get("longitude", data.get("lon"))
+        date_val = data.get("date")
+    else:
+        lat = request.args.get("latitude", request.args.get("lat"))
+        lon = request.args.get("longitude", request.args.get("lon"))
+        date_val = request.args.get("date")
+
+    result = fetch_mur_sst(lat, lon, date_val=date_val)
+
+    if result.get("status") == "error":
+        error_type = result.get("error_type")
+        if error_type == "ValidationError":
+            return jsonify(result), 400
+        elif error_type in ("ConnectionTimeoutError", "NetworkError"):
+            return jsonify(result), 504
+        elif error_type == "ERDDAPHttpError":
+            # Map upstream ERDDAP errors
+            http_status = result.get("http_status", 502)
+            return jsonify(result), 502 if http_status in (500, 503) else http_status
+        else:
+            return jsonify(result), 500
+
+    return jsonify(result), 200
 
 @app.errorhandler(413)
 def too_large(error):

@@ -90,6 +90,7 @@ Located at route `GET, POST /ocean-temperature`, [templates/ocean_temperature.ht
 - `POST /api/analyze-region`: REST endpoint accepting JSON `{ media_source, filename, x, y, width, height }`; returns OpenCV ROI statistics.
 - `POST /api/sample-pixel`: REST endpoint accepting JSON `{ media_source, filename, x, y }`; returns single-pixel statistics.
 - `GET /api/dataset-info`: REST endpoint returning dataset metadata.
+- `GET, POST /api/mur-sst`: REST endpoint querying authentic numerical Level-4 MUR Sea Surface Temperature from NOAA CoastWatch ERDDAP (`jplMURSST41`). Accepts query parameters `?lat=...&lon=...&date=...` (GET) or JSON payload `{"latitude": ..., "longitude": ..., "date": ...}` (POST). Returns temperature in Celsius, observation error, mask status, and dataset provenance.
 
 ---
 
@@ -117,11 +118,13 @@ C:\Users\User\Videos\EarthSonic-main\
 ├── .git/                               # Git version control repository
 ├── .gitignore                          # Ignores .venv/, uploads/, __pycache__/, etc.
 ├── .venv/                              # Isolated Python 3.14 virtual environment
-├── app.py                              # Flask application controller & API routes (143 lines)
-├── vision_engine.py                    # Modular OpenCV computer vision & calibration engine (274 lines)
+├── app.py                              # Flask application controller & API routes (183 lines)
+├── erddap_client.py                    # NOAA CoastWatch ERDDAP MUR SST client & validator (245 lines)
+├── vision_engine.py                    # Modular OpenCV computer vision & calibration engine (283 lines)
 ├── requirements.txt                    # Project dependency manifest (Flask, opencv-python, numpy)
 ├── README.txt                          # Legacy developer notes from original prototype
-├── test_modular.py                     # Automated integration test suite (6 test cases)
+├── test_modular.py                     # Automated UI & OpenCV regression test suite (6 test cases)
+├── test_erddap.py                      # Automated ERDDAP integration test suite (7 test scenarios)
 ├── PROJECT_CONTEXT.md                  # This permanent project technical memory document
 ├── static/
 │   ├── app.js                          # Client canvas interaction, API client, Web Audio engine (442 lines)
@@ -139,13 +142,22 @@ C:\Users\User\Videos\EarthSonic-main\
 
 ### Detailed File Responsibilities
 - **[app.py](file:///C:/Users/User/Videos/EarthSonic-main/app.py):**  
-  Entry point for Flask. Manages configuration, routes `/` and `/ocean-temperature`, upload file size limits (250 MB), static file serving from `uploads/`, and dispatches requests to `vision_engine`.
+  Entry point for Flask. Manages configuration, routes `/` and `/ocean-temperature`, upload file size limits (250 MB), static file serving from `uploads/`, `/api/analyze-region`, `/api/sample-pixel`, `/api/dataset-info`, and `/api/mur-sst`.
+- **[erddap_client.py](file:///C:/Users/User/Videos/EarthSonic-main/erddap_client.py):**  
+  Dedicated scientific data client for NOAA CoastWatch ERDDAP (`jplMURSST41`):
+  - `validate_coordinates(lat, lon)`: Validates ranges ($[-90^\circ, 90^\circ]$ and $[-180^\circ, 180^\circ]$) and snaps to 0.01° grid.
+  - `validate_date(date_val)`: Validates format (`YYYY-MM-DD`), enforces dataset boundary ($\ge 2002-06-01$), and formats to daily `09:00:00Z` timestamp.
+  - `build_erddap_url(lat, lon, timestamp)`: Constructs properly dimensioned ERDDAP griddap query.
+  - `fetch_mur_sst(lat, lon, date_val, timeout)`: Executes HTTP request with 8-second timeout, parses JSON payload, handles missing/fill values, maps categorical mask flags (`open_sea`, `land`, `open_lake`, `open_sea_with_ice`, `open_lake_with_ice`), and formats structured response in degrees Celsius.
 - **[vision_engine.py](file:///C:/Users/User/Videos/EarthSonic-main/vision_engine.py):**  
   Core computer vision module:
   - `VisionEngine._init_calibration()`: Reads `sst_mur_colorbar.png`, samples the horizontal gradient from $X=480$ ($-5^\circ\text{C}$) to $X=3365$ ($+35^\circ\text{C}$), converts to CIE L\*a\*b\*, and builds a 722-sample lookup table (`self.gradient_lab`, `self.temps`).
   - `VisionEngine.estimate_pixel(image_bgr, x, y)`: Maps single pixels to temperature and detects land masks.
   - `VisionEngine.analyze_roi(image_bgr, x, y, width, height)`: Vectorized region analysis computing mean, median, min, max, std dev ($\sigma$), ocean coverage %, and thermal zones.
   - `VisionEngine.pixel_to_geo()` & `roi_to_geo_bbox()`: Converts 1024×512 pixel coordinates to geographic latitude/longitude degrees.
+  - `VisionEngine.fetch_mur_point(lat, lon, date_str, timeout)`: Convenience bridge to `erddap_client.fetch_mur_sst`.
+- **[test_erddap.py](file:///C:/Users/User/Videos/EarthSonic-main/test_erddap.py):**  
+  Automated test suite executing 7 comprehensive test scenarios: unit validation functions, offshore Durban point query (mocked), Durban land coordinate detection, invalid coordinates handling (HTTP 400), invalid dates rejection (HTTP 400), fill-value parsing, simulated timeouts / 503 errors (HTTP 504 / 502), and a real live network call to NOAA CoastWatch ERDDAP.
 - **[static/app.js](file:///C:/Users/User/Videos/EarthSonic-main/static/app.js):**  
   Client controller:
   - `initCanvas()`, `drawOverlay()`: Renders visualization onto canvas and draws ROI dashed box.
@@ -243,6 +255,53 @@ $$\text{Chroma} = \sqrt{(a - 128)^2 + (b - 128)^2}$$
   - `analysis_error` provides ground-truth observation uncertainty ($\pm 0.4^\circ\text{C}$ in clear coastal waters) that EarthSonic can sonify as an auditory confidence dimension.
 - **Integration Feasibility:** Confirmed feasible, high-speed ($\approx 1.2\text{ KB}$ JSON payload, sub-second latency), and fully compatible with EarthSonic's existing coordinate mapping.
 
+### 5.7 Live MUR Numerical Data Integration via Flask (`/api/mur-sst`)
+Implemented in Milestone 7 via [erddap_client.py](file:///C:/Users/User/Videos/EarthSonic-main/erddap_client.py) and registered as route `GET, POST /api/mur-sst` in [app.py](file:///C:/Users/User/Videos/EarthSonic-main/app.py):
+
+#### 1. Input Validation Architecture
+- **Coordinate Validation (`validate_coordinates`):**
+  - Confirms latitude is numeric and within $[-90.0^\circ, +90.0^\circ]$; clamped to MUR grid bounds $[-89.99^\circ, +89.99^\circ]$ and rounded to $0.01^\circ$.
+  - Confirms longitude is numeric and within $[-180.0^\circ, +180.0^\circ]$; clamped to $[-179.99^\circ, +180.00^\circ]$ and rounded to $0.01^\circ$.
+  - Returns `(False, ..., error_message)` if missing, non-numeric, or out of range, mapped to HTTP 400 `ValidationError`.
+- **Date Validation (`validate_date`):**
+  - Accepts `YYYY-MM-DD` or ISO timestamp `YYYY-MM-DDTHH:MM:SSZ`. Defaults to `2026-11-13` if omitted.
+  - Validates calendar dates using `datetime.strptime` (rejects invalid dates like `2026-02-30`).
+  - Enforces dataset commencement limit: dates before `2002-06-01` are rejected with HTTP 400.
+  - Normalizes timestamps to the standard MUR daily index `YYYY-MM-DDT09:00:00Z`.
+
+#### 2. Upstream Network & Timeout Architecture
+- Constructs single-grid-cell queries for `analysed_sst`, `analysis_error`, and `mask`:
+  ```text
+  https://coastwatch.pfeg.noaa.gov/erddap/griddap/jplMURSST41.json?analysed_sst[(timestamp)][(lat):1:(lat)][(lon):1:(lon)],analysis_error[...],mask[...]
+  ```
+- **Timeout:** Enforces a strict 8.0-second HTTP timeout using standard library `urllib.request`.
+- **Error Handling:**
+  - `TimeoutError` / `URLError`: Mapped to HTTP 504 Gateway Timeout.
+  - Upstream ERDDAP 500 / 503 errors: Mapped to HTTP 502 Bad Gateway, parsing and preserving ERDDAP's internal error explanation.
+  - JSON parse errors / empty tables: Handled safely with descriptive error payloads.
+
+#### 3. Data Interpretation & Mask Filtering
+- **Celsius Consistency:** ERDDAP serves `analysed_sst` natively in Celsius; no temperature offset is subtracted.
+- **Fill Values:** Negative fill values (`-7.768` for SST, `-327.68` for error, `-128` for mask) are automatically parsed as `null` / `None`.
+- **Categorical Masks:** Decodes mask integers into descriptive metadata:
+  - `1`: `open_sea` (`is_ocean: True`)
+  - `2`: `land` (`is_ocean: False`, sets continental warning, suppresses SST)
+  - `4`: `open_lake` (`is_ocean: False`)
+  - `8`: `open_sea_with_ice` (`is_ocean: False`)
+  - `16`: `open_lake_with_ice` (`is_ocean: False`)
+- **Scientific Attribution:** Every response includes `product_type: "Level-4 (L4) Blended Foundation SST Analysis (Analyzed gridded product, not a single sensor measurement)"` to prevent misrepresentation as raw satellite radiometer observations.
+
+#### 4. Automated & Live Verification Results
+Verified via automated test suite [test_erddap.py](file:///C:/Users/User/Videos/EarthSonic-main/test_erddap.py):
+1. **Unit Validation Functions:** Coordinate clamping, string conversion, and date checks passed.
+2. **Offshore Durban (Mocked):** Verified `GET` and `POST` return HTTP 200, SST `22.858°C`, error `0.400°C`, `is_ocean: True`.
+3. **Land Coordinate (Mocked):** Verified Durban Harbor coordinates return `mask: 2` (`land`), `is_ocean: False`, SST `null`, and land warning.
+4. **Invalid Coordinates:** Out-of-range and non-numeric coordinates return HTTP 400 `ValidationError`.
+5. **Invalid Dates:** Format errors and dates before 2002 return HTTP 400 `ValidationError`.
+6. **Fill Value Handling:** Missing and fill values cleanly parse to `null` without throwing exceptions.
+7. **Simulated Upstream Errors:** Timeouts return HTTP 504; ERDDAP 503/500 returns HTTP 502 with upstream message.
+8. **Real Live Network Request:** Live HTTP query to NOAA CoastWatch ERDDAP for Durban waters ($-29.85^\circ\text{S}, +31.06^\circ\text{E}$) returned HTTP 200, SST **$22.858^\circ\text{C}$** ($\pm 0.40^\circ\text{C}$).
+
 ---
 
 ## 6. Sonification
@@ -334,6 +393,12 @@ Implemented in [static/app.js](file:///C:/Users/User/Videos/EarthSonic-main/stat
 | Milestone 6 (Minimalist Scientific Refinement):                                                 |
 | - Removed all decorative emojis across landing page and module cards.                           |
 | - Introduced clean, monochrome SVG vector iconography.                                         |
+|                                                                                                 |
+| Milestone 7 (Live MUR ERDDAP Numerical Integration):                                            |
+| - Created erddap_client.py connecting to NOAA CoastWatch ERDDAP (jplMURSST41).                 |
+| - Implemented dedicated REST endpoint GET, POST /api/mur-sst.                                  |
+| - Added rigorous coordinate & date validation, categorical mask decoding, and fill values.     |
+| - Automated test suite test_erddap.py verified 7 test cases + live network query (22.858°C).   |
 +-------------------------------------------------------------------------------------------------+
 ```
 
@@ -341,8 +406,8 @@ Implemented in [static/app.js](file:///C:/Users/User/Videos/EarthSonic-main/stat
 
 ## 9. Known Limitations and Outstanding Work
 
-1. **Numerical Data Access Validated, Integration Pending:**  
-   The NOAA CoastWatch ERDDAP endpoint (`jplMURSST41`) has been empirically validated (HTTP 200, 3×3 grid parsed cleanly with native Celsius and explicit $1\sigma$ error). However, the live Flask backend integration has not yet been implemented (per the read-only milestone boundary).
+1. **Numerical Data Backend Integration Active (Frontend UI Integration Pending):**  
+   The backend `/api/mur-sst` endpoint is fully functional and retrieves authentic Level-4 MUR SST, error bounds, and mask classifications from NOAA CoastWatch ERDDAP. However, the client frontend (`templates/ocean_temperature.html` / `static/app.js`) currently displays the OpenCV colormap estimate only; the UI has not yet been wired to display the authentic numerical data side-by-side.
 2. **JPEG Compression Chroma Noise:**  
    In lossy JPEG images, edge ringing can cause a handful of rogue pixels near coastlines to exhibit chroma deviations.
 3. **Single Active Scientific Module:**  
@@ -354,10 +419,14 @@ Implemented in [static/app.js](file:///C:/Users/User/Videos/EarthSonic-main/stat
 
 ## 10. Next Development Milestone
 
-### Recommended Next Milestone: **Milestone 7 — NOAA ERDDAP Live Numerical Data Integration**
-- **Objective:** Implement a lightweight server-side helper in `vision_engine.py` connecting EarthSonic to `https://coastwatch.pfeg.noaa.gov/erddap/griddap/jplMURSST41.json`.
-- **Mechanism:** When a user selects a bounding box or point, the backend queries ERDDAP for the exact geographic coordinates and date, computes authentic numerical mean SST and observation error, and returns both the **Visualization Colormap Estimate** and the **Authentic MUR Numerical Measurement** side-by-side.
-- **Safety / Robustness:** Include a 5-second timeout and fallback mechanism to ensure offline robustness during demonstrations.
+### Recommended Next Milestone: **Milestone 8 — Frontend Dual-Readout UI & Sonification Confidence Modulation**
+- **Objective:** Integrate the newly completed `/api/mur-sst` endpoint into the Ocean Temperature workspace UI (`templates/ocean_temperature.html` and `static/app.js`).
+- **Mechanism:**
+  - When a user selects a point or bounding box on the NASA visualization, the frontend will simultaneously display:
+    1. **Colormap Estimate:** Derived from local OpenCV CIE L\*a\*b\* inversion.
+    2. **Authentic MUR Measurement:** Retrieved asynchronously from `/api/mur-sst` (e.g. `$22.86^\circ\text{C} \pm 0.40^\circ\text{C}$`).
+  - Provide an interactive comparison pill showing the Delta ($\Delta T$) between image estimation and gridded numerical ground truth.
+  - Wire `analysis_error_c` into the Web Audio engine as an acoustic confidence dimension (e.g. modulating harmonic clarity or a subtle secondary confidence overtone).
 
 ---
 
@@ -383,7 +452,12 @@ Implemented in [static/app.js](file:///C:/Users/User/Videos/EarthSonic-main/stat
 - **Files Affected:** `templates/landing.html`, `static/style.css`.
 - **Verification:** Regex scan across codebase confirmed zero emojis remain; live server test confirmed SVG icons render cleanly with HTTP 200.
 
-### Commit `docs-mur-val` — 2026-11-14
+### Commit `a7c400f` — 2026-11-14
 - **Purpose:** Document empirical validation of the NASA/JPL MUR numerical dataset via NOAA CoastWatch ERDDAP (`jplMURSST41`).
 - **Files Affected:** `PROJECT_CONTEXT.md` (documentation-only change; zero application code modified).
 - **Verification:** Live HTTP queries to `jplMURSST41.json` confirmed metadata, land mask filtering (`mask=2`), open ocean temperatures (`22.86°C`), and observation error bounds ($\pm 0.4^\circ\text{C}$).
+
+### Commit `feat-mur-live` — 2026-11-14
+- **Purpose:** Live MUR numerical data integration via NOAA CoastWatch ERDDAP (`jplMURSST41`).
+- **Files Affected:** `erddap_client.py` (new), `app.py`, `vision_engine.py`, `test_erddap.py` (new), `PROJECT_CONTEXT.md`.
+- **Verification:** Comprehensive test suite `test_erddap.py` passed 7 test scenarios (validation, offshore Durban, Durban land mask, invalid coords, invalid dates, fill values, simulated timeouts/503s); live ERDDAP network query verified with HTTP 200 ($22.858^\circ\text{C} \pm 0.4^\circ\text{C}$). Existing test suite `test_modular.py` confirmed 100% backward compatibility.

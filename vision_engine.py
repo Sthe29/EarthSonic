@@ -279,5 +279,13 @@ class VisionEngine:
             "scientific_disclaimer": "Experimental visualization-based estimate calibrated against SVS 5101 colormap. Does not replace raw numerical MUR sensor arrays."
         }
 
+    def fetch_mur_point(self, lat, lon, date_str=None, timeout=8.0):
+        """
+        Query authentic Level-4 MUR Sea Surface Temperature for a geographic point
+        via the NOAA CoastWatch ERDDAP client.
+        """
+        from erddap_client import fetch_mur_sst
+        return fetch_mur_sst(lat, lon, date_val=date_str, timeout=timeout)
+
 # Global instance
 engine = VisionEngine()
