@@ -1,0 +1,102 @@
+<!DOCTYPE html> <!-- Tell the browser this page uses modern HTML -->
+<html lang="en"> <!-- Start the page and declare its language -->
+<head> <!-- Start page metadata -->
+    <meta charset="UTF-8"> <!-- Support standard text characters -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- Make the layout responsive -->
+    <title>EarthSound | Visual Analysis</title> <!-- Set the browser tab title -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}"> <!-- Load the dashboard stylesheet -->
+</head> <!-- End page metadata -->
+<body> <!-- Start the visible page -->
+    <header class="topbar"> <!-- Create the top navigation bar -->
+        <a class="brand" href="{{ url_for('index') }}"> <!-- Link the brand back to the dashboard -->
+            <span class="brand-mark">≋</span> <!-- Show a simple sound-wave mark -->
+            <span><strong>EarthSound</strong><small>See it. Hear it.</small></span> <!-- Show the project name and tagline -->
+        </a> <!-- End the brand link -->
+        <span class="top-tag">NASA VISUAL ANALYSER</span> <!-- Identify the tool -->
+    </header> <!-- End the navigation bar -->
+
+    <main class="page-wrap"> <!-- Keep the dashboard content centered -->
+        <section class="intro"> <!-- Introduce the dashboard -->
+            <p class="eyebrow">VISUAL INPUT WORKSPACE</p> <!-- Show a small section label -->
+            <h1>Explore the science behind the visuals.</h1> <!-- Show the main heading -->
+            <p class="muted">Upload a NASA image or video, calibrate its legend, and inspect a selected point.</p> <!-- Explain the dashboard in plain language -->
+        </section> <!-- End the introduction -->
+
+        {% with messages = get_flashed_messages(with_categories=true) %} <!-- Read any upload messages -->
+            {% if messages %} <!-- Check whether messages exist -->
+                {% for category, message in messages %} <!-- Display each message -->
+                    <div class="notice {{ category }}">{{ message }}</div> <!-- Show the message with its style -->
+                {% endfor %} <!-- Finish displaying messages -->
+            {% endif %} <!-- Finish the message check -->
+        {% endwith %} <!-- Finish the message block -->
+
+        <section class="upload-panel panel"> <!-- Create the upload panel -->
+            <form method="POST" enctype="multipart/form-data"> <!-- Send the selected file to Flask -->
+                <label class="upload-box" for="media-input"> <!-- Make the upload area clickable -->
+                    <span class="upload-icon">↑</span> <!-- Show an upload symbol -->
+                    <strong>Choose a NASA image or video</strong> <!-- Explain what can be uploaded -->
+                    <span class="muted small">PNG, JPG, WEBP, MP4, MOV, AVI and more · Up to 250 MB</span> <!-- List supported formats and limit -->
+                    <span class="choose-button">Browse files</span> <!-- Style the upload prompt like a button -->
+                </label> <!-- End the upload area -->
+                <input id="media-input" name="media" type="file" accept="image/*,video/*" required> <!-- Let the user choose an image or video -->
+                <button class="primary-button" type="submit">Upload and open analysis</button> <!-- Submit the upload -->
+            </form> <!-- End the upload form -->
+        </section> <!-- End the upload panel -->
+
+        {% if uploaded_url %} <!-- Show the workspace only after a successful upload -->
+        <section class="workspace"> <!-- Start the analysis workspace -->
+            <div class="section-heading"> <!-- Show the uploaded file details -->
+                <div><p class="eyebrow">CURRENT FILE</p><h2>{{ uploaded_name }}</h2></div> <!-- Display the file name -->
+                <span class="status-pill">Uploaded</span> <!-- Show upload status -->
+            </div> <!-- End the file heading -->
+
+            <div class="analysis-grid"> <!-- Arrange the media and controls in two columns -->
+                <section class="panel media-panel"> <!-- Create the media preview panel -->
+                    <div class="panel-heading"><h3>Visualization</h3><span class="muted small">Click the legend or map to sample pixels</span></div> <!-- Explain how to interact with the media -->
+                    {% if media_type == "video" %} <!-- Check whether the uploaded file is a video -->
+                        <video id="media-video" class="media-element" src="{{ uploaded_url }}" controls playsinline></video> <!-- Display the uploaded video -->
+                        <canvas id="analysis-canvas" class="analysis-canvas"></canvas> <!-- Draw video frames here for pixel sampling -->
+                    {% else %} <!-- Otherwise the uploaded file is an image -->
+                        <img id="media-image" class="media-element" src="{{ uploaded_url }}" alt="Uploaded NASA visualization"> <!-- Display the uploaded image -->
+                        <canvas id="analysis-canvas" class="analysis-canvas"></canvas> <!-- Draw the image here for pixel sampling -->
+                    {% endif %} <!-- Finish the media type check -->
+                    <p class="muted small" id="media-help">Select a calibration mode, then click the relevant part of the visualization.</p> <!-- Give the user a short instruction -->
+                </section> <!-- End the media panel -->
+
+                <aside class="panel controls-panel"> <!-- Create the measurement controls -->
+                    <h3>Temperature calibration</h3> <!-- Name the calibration section -->
+                    <p class="muted small">Use the video's own legend. Set the temperature at two points on its colour scale.</p> <!-- Explain why calibration is required -->
+                    <label for="low-temp">Lowest legend temperature (°C)</label> <!-- Label the low temperature input -->
+                    <input id="low-temp" type="number" step="any" value="0"> <!-- Let the user enter the low legend value -->
+                    <label for="high-temp">Highest legend temperature (°C)</label> <!-- Label the high temperature input -->
+                    <input id="high-temp" type="number" step="any" value="40"> <!-- Let the user enter the high legend value -->
+                    <div class="sample-buttons"> <!-- Group the legend sampling buttons -->
+                        <button id="sample-low" class="secondary-button" type="button">1. Sample low colour</button> <!-- Ask the user to click the low end of the legend -->
+                        <button id="sample-high" class="secondary-button" type="button">2. Sample high colour</button> <!-- Ask the user to click the high end of the legend -->
+                        <button id="sample-point" class="secondary-button" type="button">3. Select map point</button> <!-- Ask the user to click the location to measure -->
+                    </div> <!-- End the sampling buttons -->
+                    <p id="sampling-status" class="helper-text">No calibration colours selected yet.</p> <!-- Show which sampling step is active -->
+                    <div class="temperature-card"> <!-- Highlight the current estimated temperature -->
+                        <span class="muted small">Estimated temperature</span> <!-- Label the displayed value -->
+                        <strong id="temperature-value">—</strong> <!-- Show the temperature after calibration -->
+                        <span id="temperature-status" class="muted small">Waiting for calibration and a selected point</span> <!-- Explain the current status -->
+                    </div> <!-- End the temperature card -->
+                    <div class="readout-row"><span>Selected pixel</span><strong id="pixel-readout">Not selected</strong></div> <!-- Display the selected pixel colour -->
+                    <div class="readout-row"><span>Video time</span><strong id="time-readout">00:00.0</strong></div> <!-- Display the current video time -->
+                    <div class="sound-controls"> <!-- Group sound controls -->
+                        <button id="sound-toggle" class="primary-button" type="button">Enable sound</button> <!-- Start or stop generated sound -->
+                        <label for="volume">Volume</label> <!-- Label the sound volume -->
+                        <input id="volume" type="range" min="0" max="1" step="0.01" value="0.15"> <!-- Let the user control sound volume -->
+                    </div> <!-- End sound controls -->
+                </aside> <!-- End controls panel -->
+            </div> <!-- End analysis grid -->
+
+            <div class="notice warning scientific-note">Important: this prototype estimates temperature only from a two-colour, linear legend calibration. Many NASA visualizations use multi-colour or non-linear legends; those need multi-point calibration before their Celsius estimates can be trusted. Values are estimates, not NASA-provided measurements.</div> <!-- Clearly state the scientific limitation -->
+        </section> <!-- End the analysis workspace -->
+        {% endif %} <!-- Finish the uploaded-file check -->
+    </main> <!-- End main page content -->
+
+    <script>window.EARTHSOUND_MEDIA_TYPE = {{ media_type|tojson }};</script> <!-- Pass the uploaded media type to JavaScript -->
+    <script src="{{ url_for('static', filename='app.js') }}"></script> <!-- Load the interactive analysis logic -->
+</body> <!-- End visible page -->
+</html> <!-- End the document -->
