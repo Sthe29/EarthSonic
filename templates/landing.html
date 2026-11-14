@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EarthSonic | The Earth Information Jukebox — Scientific Exploration Modules</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <a href="#module-selection" class="skip-link">Skip to scientific modules selection</a>
+
+    <header class="topbar" role="banner">
+        <div class="topbar-content">
+            <div class="brand">
+                <span class="brand-icon" aria-hidden="true">≋</span>
+                <div class="brand-titles">
+                    <strong>EarthSonic</strong>
+                    <span class="brand-tagline">The Earth Information Jukebox</span>
+                </div>
+            </div>
+
+            <div class="topbar-badges" role="region" aria-label="Platform identification">
+                <span class="badge challenge-badge">NASA Space Apps 2026</span>
+                <span class="badge sst-badge">Modular Earth Data Platform</span>
+            </div>
+        </div>
+    </header>
+
+    <main id="main-content" class="page-wrap" role="main">
+        <!-- Landing Hero -->
+        <section class="landing-hero" aria-labelledby="landing-title">
+            <span class="eyebrow">NASA EARTH INFORMATION JUKBOX</span>
+            <h1 id="landing-title">Listen to Our Changing Planet</h1>
+            <p class="landing-desc">
+                EarthSonic converts NASA Earth Information Center scientific visualizations into intuitive, non-speech audio soundscapes. Designed for blind, low-vision, and sighted explorers alike, EarthSonic allows you to experience Earth science data through sound.
+            </p>
+            <p class="landing-subtitle">
+                Select a scientific exploration module below to begin your auditory investigation.
+            </p>
+        </section>
+
+        <!-- Module Selection Section -->
+        <section id="module-selection" class="modules-container" aria-labelledby="modules-heading">
+            <div class="section-title-wrap">
+                <span class="eyebrow">SCIENTIFIC EXPLORATION SUITE</span>
+                <h2 id="modules-heading">Earth Science Modules</h2>
+                <p class="muted">Choose an active module to inspect visualizations, select regions, and hear data sonifications.</p>
+            </div>
+
+            <div class="modules-grid">
+                <!-- Module 1: Ocean Temperature (Active) -->
+                <article class="module-card available" aria-labelledby="mod-1-title">
+                    <div class="module-card-header">
+                        <div class="module-icon-wrap sst-icon" aria-hidden="true">
+                            <span>🌊</span>
+                        </div>
+                        <span class="module-status-badge available-badge">
+                            <span class="status-dot pulse" aria-hidden="true"></span> Available Now
+                        </span>
+                    </div>
+
+                    <div class="module-visual-preview sst-preview" aria-hidden="true">
+                        <div class="preview-overlay">
+                            <span class="preview-tag">NASA SVS #5101 · JPL MUR</span>
+                        </div>
+                    </div>
+
+                    <div class="module-content">
+                        <span class="module-source-tag">OCEANOGRAPHY &bull; THERMAL DYNAMICS</span>
+                        <h3 id="mod-1-title">Sea Surface Temperature (SST)</h3>
+                        <p class="module-desc">
+                            Explore global sea-surface temperature using NASA SVS 5101 visualizations. Calibrated across the -5°C to 35°C legend, select ocean regions to hear thermal mean pitch and variance textures with automated land-mask exclusion.
+                        </p>
+
+                        <div class="module-tags" aria-label="Module features">
+                            <span class="tag">Near-Real-Time SST</span>
+                            <span class="tag">OpenCV CIE L*a*b*</span>
+                            <span class="tag">ROI Sonification</span>
+                            <span class="tag">Screen Reader Ready</span>
+                        </div>
+
+                        <div class="module-actions">
+                            <a href="{{ url_for('ocean_temperature') }}" class="btn btn-launch-module" aria-label="Launch Ocean Temperature Module">
+                                Launch Module <span aria-hidden="true">→</span>
+                            </a>
+                        </div>
+                    </div>
+                </article>
+
+                <!-- Module 2: Ocean Currents (Coming Soon) -->
+                <article class="module-card coming-soon" aria-labelledby="mod-2-title">
+                    <div class="module-card-header">
+                        <div class="module-icon-wrap currents-icon" aria-hidden="true">
+                            <span>🌀</span>
+                        </div>
+                        <span class="module-status-badge coming-soon-badge">
+                            Coming Soon
+                        </span>
+                    </div>
+
+                    <div class="module-visual-preview currents-preview" aria-hidden="true">
+                        <div class="preview-overlay">
+                            <span class="preview-tag">ECCO Circulation Model</span>
+                        </div>
+                    </div>
+
+                    <div class="module-content">
+                        <span class="module-source-tag">OCEAN DYNAMICS &bull; VECTOR FLOW</span>
+                        <h3 id="mod-2-title">Ocean Currents &amp; Circulation</h3>
+                        <p class="module-desc">
+                            Auditory mapping of ocean surface velocity vectors, circulation gyres, and major boundary currents (such as the Gulf Stream and Agulhas Current). Currently in scientific design.
+                        </p>
+
+                        <div class="module-tags" aria-label="Planned features">
+                            <span class="tag">Vector Velocity</span>
+                            <span class="tag">Circulation Gyres</span>
+                            <span class="tag">Directional Audio</span>
+                        </div>
+
+                        <div class="module-actions">
+                            <div class="btn btn-disabled-module" aria-disabled="true" tabindex="-1">
+                                Coming Soon &bull; In Research
+                            </div>
+                        </div>
+                    </div>
+                </article>
+
+                <!-- Module 3: Weather and Atmosphere (Coming Soon) -->
+                <article class="module-card coming-soon" aria-labelledby="mod-3-title">
+                    <div class="module-card-header">
+                        <div class="module-icon-wrap atmosphere-icon" aria-hidden="true">
+                            <span>⛈️</span>
+                        </div>
+                        <span class="module-status-badge coming-soon-badge">
+                            Coming Soon
+                        </span>
+                    </div>
+
+                    <div class="module-visual-preview atmosphere-preview" aria-hidden="true">
+                        <div class="preview-overlay">
+                            <span class="preview-tag">NASA GPM &amp; AIRS</span>
+                        </div>
+                    </div>
+
+                    <div class="module-content">
+                        <span class="module-source-tag">ATMOSPHERIC SCIENCE &bull; MOISTURE</span>
+                        <h3 id="mod-3-title">Weather &amp; Atmosphere</h3>
+                        <p class="module-desc">
+                            Translating atmospheric water vapor, tropical cyclones, and precipitation rates into multi-layered acoustic soundscapes representing storm dynamics and barometric anomalies.
+                        </p>
+
+                        <div class="module-tags" aria-label="Planned features">
+                            <span class="tag">Precipitation Rates</span>
+                            <span class="tag">Atmospheric Vapor</span>
+                            <span class="tag">Storm Acoustic Mapping</span>
+                        </div>
+
+                        <div class="module-actions">
+                            <div class="btn btn-disabled-module" aria-disabled="true" tabindex="-1">
+                                Coming Soon &bull; In Research
+                            </div>
+                        </div>
+                    </div>
+                </article>
+
+                <!-- Module 4: More Earth Data (Planned) -->
+                <article class="module-card planned" aria-labelledby="mod-4-title">
+                    <div class="module-card-header">
+                        <div class="module-icon-wrap earth-icon" aria-hidden="true">
+                            <span>🌍</span>
+                        </div>
+                        <span class="module-status-badge planned-badge">
+                            Planned Module
+                        </span>
+                    </div>
+
+                    <div class="module-visual-preview earth-preview" aria-hidden="true">
+                        <div class="preview-overlay">
+                            <span class="preview-tag">Terra/Aqua MODIS &bull; ICESat-2</span>
+                        </div>
+                    </div>
+
+                    <div class="module-content">
+                        <span class="module-source-tag">EARTH SYSTEM SCIENCE &bull; EXPANSION</span>
+                        <h3 id="mod-4-title">More Earth Data</h3>
+                        <p class="module-desc">
+                            Reserved for multi-variable Earth science: terrestrial vegetation indices (NDVI), polar sea-ice extent, carbon cycle fluxes, and planetary health monitoring.
+                        </p>
+
+                        <div class="module-tags" aria-label="Roadmap features">
+                            <span class="tag">Vegetation Index (NDVI)</span>
+                            <span class="tag">Cryosphere Sea-Ice</span>
+                            <span class="tag">Platform Roadmap</span>
+                        </div>
+
+                        <div class="module-actions">
+                            <div class="btn btn-disabled-module" aria-disabled="true" tabindex="-1">
+                                Planned &bull; Future Expansion
+                            </div>
+                        </div>
+                    </div>
+                </article>
+            </div>
+        </section>
+
+        <!-- Platform Pillars Section -->
+        <section class="platform-pillars" aria-labelledby="pillars-heading">
+            <h2 id="pillars-heading" class="sr-only">EarthSonic Architectural Principles</h2>
+            <div class="pillar-card">
+                <div class="pillar-icon" aria-hidden="true">🎵</div>
+                <h3>Meaningful Sonification</h3>
+                <p>Auditory pitch and modulation directly map to physical units (such as degrees Celsius), converting scientific complexity into intuitive sound.</p>
+            </div>
+            <div class="pillar-card">
+                <div class="pillar-icon" aria-hidden="true">👁️</div>
+                <h3>OpenCV Computer Vision</h3>
+                <p>Server-side image analysis processes regions of interest in milliseconds using CIE L*a*b* nearest-gradient colormap matching.</p>
+            </div>
+            <div class="pillar-card">
+                <div class="pillar-icon" aria-hidden="true">♿</div>
+                <h3>Universal Accessibility</h3>
+                <p>Built with ARIA live regions, keyboard navigation, and auditory icons to empower blind and low-vision researchers.</p>
+            </div>
+        </section>
+    </main>
+
+    <footer class="app-footer" role="contentinfo">
+        <p>EarthSonic &bull; Developed for NASA Space Apps Challenge 2026 &bull; Accessible Science Sonification Platform</p>
+    </footer>
+</body>
+</html>

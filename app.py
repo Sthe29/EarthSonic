@@ -21,8 +21,14 @@ app.config["MAX_CONTENT_LENGTH"] = MAX_UPLOAD_MB * 1024 * 1024
 def allowed_file(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
-@app.route("/", methods=["GET", "POST"])
-def index():
+@app.route("/")
+def landing():
+    """Main modular landing page presenting EarthSonic scientific exploration modules."""
+    return render_template("landing.html")
+
+@app.route("/ocean-temperature", methods=["GET", "POST"])
+def ocean_temperature():
+    """Dedicated Sea Surface Temperature (SST) scientific exploration workspace."""
     uploaded_url = None
     uploaded_name = None
     media_type = None
@@ -33,11 +39,11 @@ def index():
 
         if media is None or media.filename == "":
             flash("Choose an image or video before uploading.", "error")
-            return redirect(url_for("index"))
+            return redirect(url_for("ocean_temperature"))
 
         if not allowed_file(media.filename):
             flash("That file type is not supported. Choose an image or video.", "error")
-            return redirect(url_for("index"))
+            return redirect(url_for("ocean_temperature"))
 
         original_name = secure_filename(media.filename)
         extension = Path(original_name).suffix.lower()
@@ -54,7 +60,7 @@ def index():
     nasa_colorbar_url = url_for("static", filename="nasa/colorbar_cropped.png")
 
     return render_template(
-        "index.html",
+        "ocean_temperature.html",
         uploaded_url=uploaded_url,
         uploaded_name=uploaded_name,
         saved_filename=saved_filename,
@@ -65,10 +71,12 @@ def index():
 
 @app.route("/uploads/<path:filename>")
 def uploaded_file(filename):
+    """Serve uploaded media files safely."""
     return send_from_directory(app.config["UPLOAD_FOLDER"], filename)
 
 @app.route("/api/analyze-region", methods=["POST"])
 def api_analyze_region():
+    """Analyze a rectangular Region of Interest (ROI) with OpenCV."""
     data = request.get_json() or {}
     source = data.get("media_source", "nasa")
     filename = data.get("filename")
@@ -94,6 +102,7 @@ def api_analyze_region():
 
 @app.route("/api/sample-pixel", methods=["POST"])
 def api_sample_pixel():
+    """Analyze an individual pixel with OpenCV and CIE L*a*b* matching."""
     data = request.get_json() or {}
     source = data.get("media_source", "nasa")
     filename = data.get("filename")
@@ -117,6 +126,7 @@ def api_sample_pixel():
 
 @app.route("/api/dataset-info", methods=["GET"])
 def api_dataset_info():
+    """Metadata regarding NASA SVS 5101 and JPL MUR."""
     return jsonify({
         "dataset_name": "Sea Surface Temperature (SST) — Near Real Time",
         "svs_id": "5101",
@@ -135,7 +145,7 @@ def api_dataset_info():
 @app.errorhandler(413)
 def too_large(error):
     flash(f"File is too large. The limit is {MAX_UPLOAD_MB} MB.", "error")
-    return redirect(url_for("index"))
+    return redirect(url_for("ocean_temperature"))
 
 if __name__ == "__main__":
     app.run(debug=True)
